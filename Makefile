@@ -1,4 +1,4 @@
-.PHONY: dev stop clean logs test
+.PHONY: dev stop clean logs test run
 
 dev:
 	docker compose up --build -d
@@ -14,3 +14,6 @@ logs:
 
 test:
 	docker compose exec server pytest
+
+run:
+	docker compose up -d
