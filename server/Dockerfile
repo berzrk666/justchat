@@ -11,10 +11,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Create non-root user for security
-RUN groupadd --gid 1000 appgroup && \
-    useradd --uid 1000 --gid appgroup --shell /bin/bash --create-home appuser
-
 # -----------------------------
 # Dependencies stage
 # -----------------------------
@@ -45,9 +41,6 @@ FROM dependencies AS development
 # Install dev dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Switch to non-root user
-USER appuser
-
 # Source code will be mounted as volume in dev
 # Default command for development (with hot reload)
 CMD ["uvicorn", "chat_server.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
@@ -67,10 +60,7 @@ COPY --from=dependencies /usr/local/lib/python3.13/site-packages /usr/local/lib/
 COPY --from=dependencies /usr/local/bin /usr/local/bin
 
 # Copy source code
-COPY --chown=appuser:appgroup src/ ./src/
-
-# Switch to non-root user
-USER appuser
+COPY src/ ./src/
 
 # Production command (no reload, multiple workers)
 CMD ["uvicorn", "chat_server.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
