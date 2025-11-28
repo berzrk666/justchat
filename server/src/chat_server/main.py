@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from chat_server.settings import get_settings
@@ -18,7 +19,7 @@ origins = ["http://localhost:5173"]
 
 app.add_middleware(
     CORSMiddleware,
-    ["*"] if settings.is_development else origins,
+    allow_origins=["*"] if settings.is_development else origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,6 +33,41 @@ def root():
         "message": "Chat Server API",
         "environment": settings.ENVIRONMENT,
     }
+
+
+class ConnectionManager:
+    def __init__(self) -> None:
+        self.active_connections: list[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        await websocket.send_text(f"You: {message}")
+
+    async def broadcast_message(self, message: str):
+        for conn in self.active_connections:
+            await conn.send_text(f"[BROADCAST]: {message}")
+
+
+manager = ConnectionManager()
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.send_personal_message(data, websocket)
+            await manager.broadcast_message(f"{data}")
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+        await manager.broadcast_message("User has left the chat")
 
 
 # async_engine = create_async_engine(
