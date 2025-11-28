@@ -35,8 +35,7 @@ class BaseMessage(BaseModel):
         msg_type = data.get("type")
 
         if msg_type == MessageType.CHAT_SEND:
-            logging.debug(f"{msg_type =}")
-            logging.debug(f"{data =}")
+            logging.debug(f"Client send: {data =}")
             return ChatSend.model_validate_json(json_str)
         else:
             return None
