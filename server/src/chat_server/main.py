@@ -1,9 +1,11 @@
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.websockets import WebSocketDisconnect
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from chat_server.connection.manager import ConnectionManager
+from chat_server.protocol.message import BaseMessage
 from chat_server.settings import get_settings
 
 settings = get_settings()
@@ -43,10 +45,19 @@ manager = ConnectionManager()
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
+        # TODO: Convert BaseMessage to JSON
         while True:
             data = await websocket.receive_text()
-            await manager.send_personal_message(data, websocket)
-            await manager.broadcast_message(f"{data}")
+            # TODO: Error Handling for Invalid Formats
+            try:
+                msg = BaseMessage.from_json(data)
+                if msg:
+                    print(msg.model_dump_json(indent=2))
+                await manager.send_personal_message(data, websocket)
+                await manager.broadcast_message(f"{data}")
+            except ValidationError:
+                print("ERROR: Invalid format")
+
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.broadcast_message("User has left the chat")
