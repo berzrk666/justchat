@@ -10,7 +10,7 @@ import logging
 
 logging.basicConfig(
     level=logging.DEBUG,
-    format="{asctime} - {levelname} - {message}",
+    format="{asctime} - {levelname} - ({filename}::{funcName}) - {message}",
     style="{",
     datefmt="%d-%m-%Y %H:%M",
 )
@@ -54,7 +54,7 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            await manager.message_handler(data)
+            await manager.handle_message(data)
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
