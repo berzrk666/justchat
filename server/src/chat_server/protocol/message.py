@@ -1,7 +1,6 @@
 """Message Protocol"""
 
 from datetime import datetime
-import logging
 from typing import Any
 
 from pydantic import BaseModel
@@ -32,13 +31,13 @@ class BaseMessage(BaseModel):
 
         data = json.loads(json_str)
 
-        msg_type = data.get("type")
-
-        if msg_type == MessageType.CHAT_SEND:
-            logging.debug(f"Client send: {data =}")
-            return ChatSend.model_validate_json(json_str)
-        else:
-            return None
+        match data["type"]:
+            case MessageType.CHAT_SEND:
+                return ChatSend.model_validate_json(json_str)
+            case MessageType.CHANNEL_JOIN:
+                return ChannelJoin.model_validate_json(json_str)
+            case _:
+                return None
 
     @classmethod
     def to_json(cls, **kwargs) -> str:
