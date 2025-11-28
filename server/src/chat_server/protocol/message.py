@@ -1,6 +1,7 @@
 """Message Protocol"""
 
 from datetime import datetime
+import logging
 from typing import Any
 
 from pydantic import BaseModel
@@ -21,9 +22,11 @@ class BaseMessage(BaseModel):
     payload: Any
 
     @classmethod
-    def from_json(cls, json_str: str) -> "BaseMessage":
+    def from_json(cls, json_str: str) -> "BaseMessage | None":
         """
         Deserialize a JSON String to a Message.
+
+        Raise ValidationError in case of invalid format
         """
         import json
 
@@ -32,18 +35,23 @@ class BaseMessage(BaseModel):
         msg_type = data.get("type")
 
         if msg_type == MessageType.CHAT_SEND:
-            print(f"{msg_type =}")
-            print(f"{data =}")
+            logging.debug(f"{msg_type =}")
+            logging.debug(f"{data =}")
             return ChatSend.model_validate_json(json_str)
-
-        return BaseMessage.model_validate_json(json_str)
+        else:
+            return None
 
     @classmethod
     def to_json(cls, **kwargs) -> str:
+        # FIX: Not working, just use model_dump_json directly for now.
         """
-        Serialize message to JSON string.
+        Serialize Message to JSON string.
         """
         return cls.model_dump_json(**kwargs)
+
+
+class MessagePublic(BaseModel):
+    payload: Any
 
 
 ###################

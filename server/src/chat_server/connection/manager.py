@@ -1,5 +1,7 @@
 from fastapi import WebSocket
 
+from chat_server.protocol.message import BaseMessage
+
 
 class ConnectionManager:
     """
@@ -35,6 +37,12 @@ class ConnectionManager:
         """
         for conn in self.active_connections:
             await conn.send_text(f"[BROADCAST]: {message}")
+
+    async def message_handler(self, data: str) -> None:
+        """
+        Handle the message received by client appropriately
+        """
+        msg = BaseMessage.from_json(data)
 
     @property
     def active_count(self) -> int:
