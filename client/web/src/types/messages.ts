@@ -1,6 +1,8 @@
 export const MessageType = {
   CHAT_SEND: "chat_send",
   CHAT_BROADCAST: "chat_broadcast",
+  CHANNEL_JOIN: "channel_join",
+  CHANNEL_LEAVE: "channel_leave",
   // Future types go here
 } as const;
 
@@ -17,6 +19,7 @@ export interface BaseMessage {
 export interface ChatSendPayload {
   room_id: string;
   content: string;
+  username?: string;
 }
 
 export interface ChatSendMessage extends BaseMessage {
@@ -35,6 +38,17 @@ export interface ChatBroadcastPayload {
 export interface ChatBroadcastMessage extends BaseMessage {
   type: typeof MessageType.CHAT_BROADCAST;
   payload: ChatBroadcastPayload;
+}
+
+// Channel Join (client sends this)
+export interface ChannelJoinPayload {
+  username: string;
+  channel_id: number;
+}
+
+export interface ChannelJoinMessage extends BaseMessage {
+  type: typeof MessageType.CHANNEL_JOIN;
+  payload: ChannelJoinPayload;
 }
 
 // Union type - add more here as you implement them

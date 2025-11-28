@@ -1,8 +1,8 @@
 import { MessageType } from '../types/messages';
-import type { ChatSendMessage } from '../types/messages';
+import type { ChatSendMessage, ChannelJoinMessage } from '../types/messages';
 
 export class MessageBuilder {
-  static chatSend(roomId: string, content: string): ChatSendMessage {
+  static chatSend(roomId: string, content: string, username?: string): ChatSendMessage {
     return {
       type: MessageType.CHAT_SEND,
       timestamp: new Date().toISOString(),
@@ -10,6 +10,19 @@ export class MessageBuilder {
       payload: {
         room_id: roomId,
         content: content,
+        username: username,
+      },
+    };
+  }
+
+  static channelJoin(channelId: number, username: string): ChannelJoinMessage {
+    return {
+      type: MessageType.CHANNEL_JOIN,
+      timestamp: new Date().toISOString(),
+      correlation_id: crypto.randomUUID(),
+      payload: {
+        channel_id: channelId,
+        username: username,
       },
     };
   }
