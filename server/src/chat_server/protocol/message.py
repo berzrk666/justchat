@@ -76,3 +76,16 @@ class ChatBroadcastPayload(BaseModel):
 class ChatBroadcast(BaseMessage):
     type: MessageType = MessageType.CHAT_BROADCAST
     payload: ChatBroadcastPayload
+
+
+########################
+# Type: CHANNEL_JOIN   #
+########################
+class ChannelJoinPayload(BaseModel):
+    username: str
+    channel_id: int
+
+
+class ChannelJoin(BaseMessage):
+    type: MessageType = MessageType.CHANNEL_JOIN
+    payload: ChannelJoinPayload
