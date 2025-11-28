@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from chat_server.connection.manager import ConnectionManager
 from chat_server.settings import get_settings
 
 settings = get_settings()
@@ -33,25 +34,6 @@ def root():
         "message": "Chat Server API",
         "environment": settings.ENVIRONMENT,
     }
-
-
-class ConnectionManager:
-    def __init__(self) -> None:
-        self.active_connections: list[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-
-    async def send_personal_message(self, message: str, websocket: WebSocket):
-        await websocket.send_text(f"You: {message}")
-
-    async def broadcast_message(self, message: str):
-        for conn in self.active_connections:
-            await conn.send_text(f"[BROADCAST]: {message}")
 
 
 manager = ConnectionManager()
