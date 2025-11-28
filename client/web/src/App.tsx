@@ -41,8 +41,20 @@ function App() {
     e.preventDefault()
 
     if (message.trim() && wsRef.current && isConnected) {
-      wsRef.current.send(message)
-      console.log('Sent:', message)
+      // Create message in JSON format matching the protocol
+      const messagePayload = {
+        type: 'chat_send',
+        timestamp: new Date().toISOString(),
+        correlation_id: crypto.randomUUID(),
+        payload: {
+          room_id: crypto.randomUUID(), // TODO: Replace with actual room ID
+          content: message
+        }
+      }
+
+      const jsonMessage = JSON.stringify(messagePayload)
+      wsRef.current.send(jsonMessage)
+      console.log('Sent:', jsonMessage)
       setMessage('')
     }
   }
