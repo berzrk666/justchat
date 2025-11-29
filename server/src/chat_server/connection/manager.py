@@ -2,7 +2,7 @@ import logging
 from fastapi import WebSocket
 from fastapi.websockets import WebSocketDisconnect
 
-from chat_server.connection.context import ConnectionMetadata
+from chat_server.connection.context import ConnectionContext
 from chat_server.handler import router
 from chat_server.protocol.message import BaseMessage
 
@@ -13,7 +13,7 @@ class ConnectionManager:
     """
 
     def __init__(self) -> None:
-        self.active_connections: list[ConnectionMetadata] = []
+        self.active_connections: list[ConnectionContext] = []
         self._count: int = 0
 
     async def connect(self, websocket: WebSocket) -> None:
@@ -25,9 +25,9 @@ class ConnectionManager:
 
         await websocket.accept()
         self._count += 1
-        conn_data = ConnectionMetadata(websocket=websocket, id=self._count)
+        conn_data = ConnectionContext(websocket=websocket, id=self._count)
         if await conn_data.establish_connection():
-            logging.info(f"Created ConnectionMetadata: {conn_data}")
+            logging.info(f"Created ConnectionContext: {conn_data}")
             self.active_connections.append(conn_data)
         else:
             await websocket.close(reason="Invalid HELLO")

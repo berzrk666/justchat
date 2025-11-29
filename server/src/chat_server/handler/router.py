@@ -1,6 +1,6 @@
 import logging
 
-from chat_server.connection.context import ConnectionMetadata
+from chat_server.connection.context import ConnectionContext
 from chat_server.handler import channel_handler, chat_handler
 from chat_server.protocol.message import BaseMessage
 from chat_server.protocol.enums import MessageType
@@ -12,7 +12,7 @@ HANDLERS = {
 }
 
 
-async def dispatch(ctx: list[ConnectionMetadata], message: BaseMessage):
+async def dispatch(ctx: list[ConnectionContext], message: BaseMessage):
     """
     Route a Message to its appropriate Handler
     """

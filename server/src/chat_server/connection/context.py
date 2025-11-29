@@ -5,7 +5,7 @@ from pydantic import BaseModel, ValidationError
 from chat_server.protocol.message import Hello
 
 
-class ConnectionMetadata(BaseModel):
+class ConnectionContext(BaseModel):
     # Required for WebSocket
     model_config = {"arbitrary_types_allowed": True}
 
