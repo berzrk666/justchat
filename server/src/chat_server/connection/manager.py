@@ -1,5 +1,6 @@
 import logging
 from fastapi import WebSocket
+from fastapi.websockets import WebSocketDisconnect
 
 from chat_server.connection.context import ConnectionMetadata
 from chat_server.handler import router
@@ -18,12 +19,19 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket) -> None:
         """
         Accept and register a new WebSocket connection.
+
+        If invalid connection raise a WebSocketDisconnect
         """
 
         await websocket.accept()
         self._count += 1
         conn_data = ConnectionMetadata(websocket=websocket, id=self._count)
-        self.active_connections.append(conn_data)
+        if await conn_data.establish_connection():
+            logging.info(f"Created ConnectionMetadata: {conn_data}")
+            self.active_connections.append(conn_data)
+        else:
+            await websocket.close(reason="Invalid HELLO")
+            raise WebSocketDisconnect
 
     async def disconnect(self, websocket: WebSocket) -> None:
         """
@@ -55,7 +63,6 @@ class ConnectionManager:
         """
         logging.info(f"CLIENT SEND: {data}")
         msg = BaseMessage.from_json(data)
-        logging.debug(f"{msg =}")
         if msg is not None:
             await router.dispatch(self.active_connections, msg)
 

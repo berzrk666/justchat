@@ -1,7 +1,7 @@
 """Message Protocol"""
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 from pydantic.types import UUID4
@@ -36,6 +36,8 @@ class BaseMessage(BaseModel):
                 return ChatSend.model_validate_json(json_str)
             case MessageType.CHANNEL_JOIN:
                 return ChannelJoin.model_validate_json(json_str)
+            case MessageType.CHANNEL_LEAVE:
+                return ChannelLeave.model_validate_json(json_str)
             case _:
                 return None
 
@@ -48,21 +50,28 @@ class BaseMessage(BaseModel):
         return cls.model_dump_json(**kwargs)
 
 
-class MessagePublic(BaseModel):
-    payload: Any
+class HelloPayload(BaseModel):
+    model_config = {"extra": "forbid"}
+    username: str
+
+
+class Hello(BaseMessage):
+    type: Literal[MessageType.HELLO] = MessageType.HELLO
+    payload: HelloPayload
 
 
 ###################
 # Type: CHAT_SEND #
 ###################
 class ChatSendPayload(BaseModel):
+    model_config = {"extra": "forbid"}
     room_id: UUID4
     sender: str
     content: str
 
 
 class ChatSend(BaseMessage):
-    type: MessageType = MessageType.CHAT_SEND
+    type: Literal[MessageType.CHAT_SEND] = MessageType.CHAT_SEND
     payload: ChatSendPayload
 
 
@@ -70,11 +79,12 @@ class ChatSend(BaseMessage):
 # Type: CHAT_BROADCAST #
 ########################
 class ChatBroadcastPayload(BaseModel):
+    model_config = {"extra": "forbid"}
     content: str
 
 
 class ChatBroadcast(BaseMessage):
-    type: MessageType = MessageType.CHAT_BROADCAST
+    type: Literal[MessageType.CHAT_BROADCAST] = MessageType.CHAT_BROADCAST
     payload: ChatBroadcastPayload
 
 
@@ -82,10 +92,22 @@ class ChatBroadcast(BaseMessage):
 # Type: CHANNEL_JOIN   #
 ########################
 class ChannelJoinPayload(BaseModel):
+    model_config = {"extra": "forbid"}
     username: str
     channel_id: int
 
 
 class ChannelJoin(BaseMessage):
-    type: MessageType = MessageType.CHANNEL_JOIN
+    type: Literal[MessageType.CHANNEL_JOIN] = MessageType.CHANNEL_JOIN
     payload: ChannelJoinPayload
+
+
+class ChannelLeavePayload(BaseModel):
+    model_config = {"extra": "forbid"}
+    username: str
+    channel_id: int
+
+
+class ChannelLeave(BaseMessage):
+    type: Literal[MessageType.CHANNEL_LEAVE] = MessageType.CHANNEL_LEAVE
+    payload: ChannelLeavePayload

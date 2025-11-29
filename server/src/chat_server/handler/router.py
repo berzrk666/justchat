@@ -23,7 +23,8 @@ async def dispatch(ctx: list[ConnectionMetadata], message: BaseMessage):
     )
 
     if handler is None:
-        # TODO: Return a message error or some exception
+        # TODO: Return a message error or some exception. It will never happen
+        # here since there are a verification done in manager.handle_message()
         logging.debug(f"Unknown Message Type: {message.type}. Payload: {message}")
         return
 

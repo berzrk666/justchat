@@ -50,15 +50,18 @@ manager = ConnectionManager()
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
     try:
-        while True:
-            data = await websocket.receive_text()
-            await manager.handle_message(data)
+        await manager.connect(websocket)
+        try:
+            while True:
+                data = await websocket.receive_text()
+                await manager.handle_message(data)
 
+        except WebSocketDisconnect:
+            await manager.disconnect(websocket)
+            await manager.broadcast_message("User has left the chat")
     except WebSocketDisconnect:
-        await manager.disconnect(websocket)
-        await manager.broadcast_message("User has left the chat")
+        logging.info("Connection closed by the server: Invalid HELO initiaition")
 
 
 # async_engine = create_async_engine(

@@ -6,6 +6,8 @@ class MessageType(StrEnum):
     Types of messages that can be send.
     """
 
+    HELLO = "hello"  # First message expected after connecting to the websocket
+
     CHAT_SEND = "chat_send"  # Used when a user send a normal message
     CHAT_BROADCAST = "chat_broadcast"  # Means the message is a broadcast
 
