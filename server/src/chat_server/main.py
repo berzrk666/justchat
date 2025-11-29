@@ -59,7 +59,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
         except WebSocketDisconnect:
             await manager.disconnect(websocket)
-            await manager.broadcast_message("User has left the chat")
     except WebSocketDisconnect:
         logging.info("Connection closed by the server: Invalid HELO initiaition")
 

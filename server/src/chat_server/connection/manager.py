@@ -44,19 +44,6 @@ class ConnectionManager:
                 break
         logging.info("Connection disconnected.")
 
-    async def send_personal_message(self, message: str, websocket: WebSocket) -> None:
-        """
-        Send a message to a specific WebSocket connection.
-        """
-        await websocket.send_text(f"You: {message}")
-
-    async def broadcast_message(self, message: str) -> None:
-        """
-        Broadcast a message to all active connections.
-        """
-        for conn in self.active_connections:
-            await conn.websocket.send_text(f"[BROADCAST]: {message}")
-
     async def handle_message(self, data: str) -> None:
         """
         Handle the message received by client appropriately
@@ -65,10 +52,3 @@ class ConnectionManager:
         msg = BaseMessage.from_json(data)
         if msg is not None:
             await router.dispatch(self.active_connections, msg)
-
-    @property
-    def active_count(self) -> int:
-        """
-        Get the number of active connections.
-        """
-        return len(self.active_connections)
