@@ -1,6 +1,8 @@
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from chat_server.db.models import Base
+from sqlalchemy.sql import insert, select
+from chat_server.db.models import Base, UserTable
+from chat_server.security.utils import get_password_hash
 from chat_server.settings import get_settings
 
 settings = get_settings()
@@ -22,4 +24,13 @@ async def init_db() -> None:
     """Creates all database tables."""
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        # TODO: Create first user
+        res = await conn.execute(
+            select(UserTable).where(UserTable.username == settings.SUPERUSER_USERNAME)
+        )
+        if res.scalar_one_or_none() is None:
+            await conn.execute(
+                insert(UserTable).values(
+                    username=settings.SUPERUSER_USERNAME,
+                    hashed_password=get_password_hash(settings.SUPERUSER_PASSWORD),
+                )
+            )

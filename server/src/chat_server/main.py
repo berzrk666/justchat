@@ -1,10 +1,12 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from chat_server.connection.context import ConnectionContext
 from chat_server.connection.manager import ConnectionManager
+from chat_server.db.db import init_db
+from chat_server.security.utils import get_password_hash
 from chat_server.settings import get_settings
 
 import logging
@@ -18,11 +20,19 @@ logging.basicConfig(
 
 settings = get_settings()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
+
+
 # Create FastAPI app with settings
 app = FastAPI(
     title="Chat Server API",
     version="0.1.0",
     debug=settings.is_development,
+    lifespan=lifespan,
 )
 
 

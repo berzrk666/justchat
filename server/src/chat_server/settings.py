@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str = "your-secret-key-change-this-in-production"
 
+    SUPERUSER_USERNAME: str = "admin"
+    SUPERUSER_PASSWORD: str = "admin"
+
     # PostgreSQL Configuration
     POSTGRES_USER: str = "chatuser"
     POSTGRES_PASSWORD: str = "chatpassword"
