@@ -1,12 +1,16 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, WebSocket
+from typing import Annotated
+from fastapi import Depends, FastAPI, WebSocket, status
+from fastapi.exceptions import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.websockets import WebSocketDisconnect
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from chat_server.api.models import UserCreate
 from chat_server.connection.manager import ConnectionManager
-from chat_server.db.db import init_db
-from chat_server.security.utils import get_password_hash
+from chat_server.db import crud
+from chat_server.db.db import get_db, init_db
 from chat_server.settings import get_settings
 
 import logging
@@ -19,6 +23,8 @@ logging.basicConfig(
 )
 
 settings = get_settings()
+
+DBSession = Annotated[AsyncSession, Depends(get_db)]
 
 
 @asynccontextmanager
@@ -71,3 +77,16 @@ async def websocket_endpoint(websocket: WebSocket):
             await manager.disconnect(websocket)
     except WebSocketDisconnect:
         logging.info("Connection closed by the server: Invalid HELO initiaition")
+
+
+@app.post("/auth/signup", status_code=status.HTTP_201_CREATED)
+async def signup(session: DBSession, user_in: UserCreate):
+    """
+    Register an account.
+    """
+    try:
+        user = await crud.create_user(session, user_in)
+        # FIX: Do not return UserTable, but create a Public model.
+        return user
+    except IntegrityError:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Username already exists.")
