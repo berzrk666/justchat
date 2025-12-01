@@ -71,11 +71,3 @@ async def websocket_endpoint(websocket: WebSocket):
             await manager.disconnect(websocket)
     except WebSocketDisconnect:
         logging.info("Connection closed by the server: Invalid HELO initiaition")
-
-
-# async_engine = create_async_engine(
-#     settings.async_database_url,
-#     pool_size=settings.DB_POOL_SIZE,
-#     max_overflow=settings.DB_MAX_OVERFLOW,
-# )
-async_engine = create_async_engine(settings.DATABASE_URL.unicode_string())

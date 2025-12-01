@@ -7,7 +7,7 @@ from chat_server.settings import get_settings
 
 settings = get_settings()
 
-async_engine = create_async_engine(settings.DATABASE_URL.unicode_string())
+async_engine = create_async_engine(str(settings.DATABASE_URL))
 
 async_session = async_sessionmaker(async_engine, expire_on_commit=False)
 
