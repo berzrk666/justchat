@@ -19,6 +19,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
-    """Create all database tables."""
+    """Creates all database tables."""
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # TODO: Create first user
