@@ -15,7 +15,7 @@ function App() {
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [isConnected, setIsConnected] = useState(false)
-  const [channels, setChannels] = useState([
+  const [channels] = useState([
     { id: '1', name: 'general' },
     { id: '2', name: 'random' }
   ])

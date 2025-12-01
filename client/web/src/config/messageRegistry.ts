@@ -5,6 +5,7 @@ import { ChatMessage } from '../components/messages/ChatMessage';
 import { ChatSendMessageComponent } from '../components/messages/ChatSendMessage';
 import { ChannelJoinMessage } from '../components/messages/ChannelJoinMessage';
 import { ChannelLeaveMessage } from '../components/messages/ChannelLeaveMessage';
+import { ErrorMessage } from '../components/messages/ErrorMessage';
 
 // All message type registrations in one place
 export function initializeMessageHandlers() {
@@ -16,16 +17,17 @@ export function initializeMessageHandlers() {
   registerParser(MessageType.CHAT_SEND, (data) => data as any);
   registerRenderer(MessageType.CHAT_SEND, ChatSendMessageComponent);
 
-  // CHANNEL_JOIN
-  registerParser(MessageType.CHANNEL_JOIN, (data) => data as any);
-  registerRenderer(MessageType.CHANNEL_JOIN, ChannelJoinMessage);
+  // CHANNEL_JOIN_REQUEST
+  registerParser(MessageType.CHANNEL_JOIN_REQUEST, (data) => data as any);
+  registerRenderer(MessageType.CHANNEL_JOIN_REQUEST, ChannelJoinMessage);
 
   // CHANNEL_LEAVE
   registerParser(MessageType.CHANNEL_LEAVE, (data) => data as any);
   registerRenderer(MessageType.CHANNEL_LEAVE, ChannelLeaveMessage);
 
+  // ERROR
+  registerParser(MessageType.ERROR, (data) => data as any);
+  registerRenderer(MessageType.ERROR, ErrorMessage);
+
   // Future types registered here
-  // Example:
-  // registerParser(MessageType.ERROR, errorParser);
-  // registerRenderer(MessageType.ERROR, ErrorMessage);
 }

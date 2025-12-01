@@ -1,5 +1,5 @@
 import { MessageType } from '../types/messages';
-import type { HelloMessage, ChatSendMessage, ChannelJoinMessage, ChannelLeaveMessage } from '../types/messages';
+import type { HelloMessage, ChatSendMessage, ChannelJoinRequestMessage, ChannelLeaveMessage } from '../types/messages';
 
 export class MessageBuilder {
   static hello(username: string): HelloMessage {
@@ -26,9 +26,9 @@ export class MessageBuilder {
     };
   }
 
-  static channelJoin(channelId: number, username: string): ChannelJoinMessage {
+  static channelJoin(channelId: number, username: string): ChannelJoinRequestMessage {
     return {
-      type: MessageType.CHANNEL_JOIN,
+      type: MessageType.CHANNEL_JOIN_REQUEST,
       timestamp: new Date().toISOString(),
       correlation_id: crypto.randomUUID(),
       payload: {

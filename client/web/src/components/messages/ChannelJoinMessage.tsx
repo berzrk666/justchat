@@ -1,7 +1,7 @@
-import type { ChannelJoinMessage } from '../../types/messages';
+import type { ChannelJoinRequestMessage } from '../../types/messages';
 
 interface ChannelJoinMessageProps {
-  message: ChannelJoinMessage;
+  message: ChannelJoinRequestMessage;
 }
 
 export function ChannelJoinMessage({ message }: ChannelJoinMessageProps) {
