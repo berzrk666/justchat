@@ -2,6 +2,7 @@ from datetime import datetime
 import logging
 from fastapi import WebSocket
 from fastapi.websockets import WebSocketDisconnect
+import jwt
 from pydantic import ValidationError
 from sqlalchemy import join
 
@@ -16,6 +17,8 @@ from chat_server.protocol.message import (
     Hello,
     ErrorMessage,
 )
+from chat_server.security.utils import ALGORITHM
+from chat_server.settings import get_settings
 
 SERVER_ONLY_MESSAGES = {
     MessageType.CHANNEL_JOIN,
@@ -46,6 +49,22 @@ class ConnectionManager:
 
         try:
             data = Hello.model_validate_json(helo)
+            token = data.payload.token
+            if not token:
+                logging.debug(f"No Token in Payload: {data.payload =}")
+            if token:
+                try:
+                    id = jwt.decode(
+                        token.access_token,
+                        get_settings().SECRET_KEY,
+                        algorithms=[ALGORITHM],
+                    )
+                    logging.debug(f"Token in Payload: {id =}")
+                except Exception as e:
+                    logging.warning(f"Invalid authentication: {e}")
+                    await websocket.close(reason="Authentication failed")
+                    raise WebSocketDisconnect
+
             conn_data = ConnectionContext(
                 websocket=websocket, id=self._count, username=data.payload.username
             )
