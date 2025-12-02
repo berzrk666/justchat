@@ -4,9 +4,10 @@ from fastapi import WebSocket
 from fastapi.websockets import WebSocketDisconnect
 import jwt
 from pydantic import ValidationError
-from sqlalchemy import join
 
 from chat_server.connection.context import ConnectionContext
+from chat_server.db import crud
+from chat_server.db.db import async_session
 from chat_server.protocol.enums import MessageType
 from chat_server.protocol.message import (
     BaseMessage,
@@ -56,8 +57,13 @@ class ConnectionManager:
 
         access_token = data.payload.token
         if not access_token:
-            logging.debug(f"No Access Token in Payload: {access_token =}")
-        if access_token:
+            # Handle Guest User
+            logging.debug(f"No Access Access Token in Payload: {access_token =}")
+            conn_data = ConnectionContext(
+                websocket=websocket, username=data.payload.username
+            )
+        else:
+            # Handle Authenticated User
             logging.debug(f"Access Token in Payload: {access_token =}")
             try:
                 token = jwt.decode(
@@ -66,18 +72,26 @@ class ConnectionManager:
                     algorithms=[ALGORITHM],
                 )
                 logging.debug(f"Token Decoded: {token =}")
+                user_id = token.get("sub")
+
+                # Verify user exists in database
+                async with async_session() as session:
+                    user = await crud.get_user_by_id(session, user_id)
+                    if not user:
+                        await websocket.close(reason="User does not exist")
+                        raise WebSocketDisconnect
+
+                conn_data = ConnectionContext(
+                    websocket=websocket, id=user.id, username=user.username
+                )
             except Exception as e:
                 logging.warning(f"Invalid authentication: {e}")
                 await websocket.close(reason="Authentication failed")
                 raise WebSocketDisconnect
 
-        conn_data = ConnectionContext(
-            websocket=websocket, id=self._count, username=data.payload.username
-        )
-
         logging.info(f"Created ConnectionContext: {conn_data}")
         self.active_connections[websocket] = conn_data
-        self.connections_by_id[conn_data.id] = conn_data
+        # self.connections_by_id[conn_data.id] = conn_data
 
     def get_connection(self, websocket: WebSocket) -> "ConnectionContext | None":
         """
@@ -97,7 +111,7 @@ class ConnectionManager:
         """
         if websocket in self.active_connections:
             conn = self.active_connections.pop(websocket)
-            self.connections_by_id.pop(conn.id, None)
+            # self.connections_by_id.pop(conn.id, None)
 
             logging.info(f"<{conn.username}> has disconnected.")
 

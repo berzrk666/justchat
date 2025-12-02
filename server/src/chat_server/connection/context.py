@@ -7,6 +7,6 @@ class ConnectionContext(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
     websocket: WebSocket
-    id: int
+    id: int | None = None
     username: str
     channel_id: int | None = None
