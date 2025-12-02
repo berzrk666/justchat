@@ -38,7 +38,7 @@ async def get_user_by_username(
     return res.scalar_one_or_none()
 
 
-async def get_user_by_id(session: AsyncSession, id: int):
+async def get_user_by_id(session: AsyncSession, id: int) -> UserTable | None:
     """
     Retrieve an User from the database using an ID. Returns None if not found.
     """
