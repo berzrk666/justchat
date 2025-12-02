@@ -2,13 +2,14 @@ import { MessageType } from '../types/messages';
 import type { HelloMessage, ChatSendMessage, ChannelJoinRequestMessage } from '../types/messages';
 
 export class MessageBuilder {
-  static hello(username: string): HelloMessage {
+  static hello(username: string, token?: string): HelloMessage {
     return {
       type: MessageType.HELLO,
       timestamp: new Date().toISOString(),
       correlation_id: crypto.randomUUID(),
       payload: {
         username: username,
+        ...(token && { token }), // Include token only if provided
       },
     };
   }

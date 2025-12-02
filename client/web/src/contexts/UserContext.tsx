@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { tokenStorage } from '../services/tokenStorage'
 
 interface UserContextType {
   username: string
@@ -6,6 +7,9 @@ interface UserContextType {
   guestNumber: string
   setUsername: (username: string) => void
   avatarColor: string
+  isAuthenticated: boolean
+  login: (username: string) => void
+  logout: () => void
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
@@ -29,6 +33,10 @@ function generateAvatarColor(): string {
 }
 
 export function UserProvider({ children }: { children: ReactNode }) {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    return tokenStorage.hasValidToken()
+  })
+
   const [guestNumber] = useState<string>(() => {
     const stored = localStorage.getItem('chat-guest-number')
     if (stored) return stored
@@ -61,8 +69,31 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setDisplayName(newDisplayName)
   }
 
+  const login = (loggedInUsername: string) => {
+    setDisplayName(loggedInUsername)
+    setIsAuthenticated(true)
+  }
+
+  const logout = () => {
+    tokenStorage.clearToken()
+    setIsAuthenticated(false)
+    // Optionally reset to guest mode
+    setDisplayName('Guest')
+  }
+
   return (
-    <UserContext.Provider value={{ username, displayName, guestNumber, setUsername, avatarColor }}>
+    <UserContext.Provider
+      value={{
+        username,
+        displayName,
+        guestNumber,
+        setUsername,
+        avatarColor,
+        isAuthenticated,
+        login,
+        logout
+      }}
+    >
       {children}
     </UserContext.Provider>
   )

@@ -20,6 +20,7 @@ export interface BaseMessage {
 // Hello (client sends this on connection)
 export interface HelloPayload {
   username: string;
+  token?: string; // Optional JWT token for authentication
 }
 
 export interface HelloMessage extends BaseMessage {

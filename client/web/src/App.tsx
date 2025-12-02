@@ -1,75 +1,30 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react'
 import './App.css'
 import { initializeMessageHandlers } from './config/messageRegistry'
-import type { Message } from './types/messages'
-import { parseMessage } from './services/messageParser'
 import { MessageRenderer } from './components/messages/MessageRenderer'
 import { MessageBuilder } from './services/messageBuilder'
 import { Sidebar } from './components/Sidebar'
+import { LoginModal } from './components/LoginModal'
 import { useUser } from './contexts/UserContext'
+import { useWebSocket } from './contexts/WebSocketContext'
 
 function App() {
-  const { username } = useUser()
+  const { username, displayName, isAuthenticated, login, logout } = useUser()
+  const { isConnected, messages, sendMessage: wsSendMessage, reconnect } = useWebSocket()
   // TODO: Replace with actual room ID management
   const TEMP_ROOM_ID = useRef(crypto.randomUUID()).current
   const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState<Message[]>([])
-  const [isConnected, setIsConnected] = useState(false)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [channels] = useState([
     { id: '1', name: 'general' },
     { id: '2', name: 'random' }
   ])
   const [currentChannelId, setCurrentChannelId] = useState('1')
-  const wsRef = useRef<WebSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Initialize message handlers on mount
   useEffect(() => {
     initializeMessageHandlers()
-  }, [])
-
-  useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8000/ws')
-
-    ws.onopen = () => {
-      console.log('Connected to WebSocket')
-      setIsConnected(true)
-
-      // Send Hello message first to establish connection
-      const helloMessage = MessageBuilder.hello(username)
-      ws.send(JSON.stringify(helloMessage))
-      console.log('Sent Hello:', helloMessage)
-
-      // Then send Channel Join message
-      const channelJoinMessage = MessageBuilder.channelJoin(parseInt(currentChannelId), username)
-      ws.send(JSON.stringify(channelJoinMessage))
-      console.log('Sent Channel Join:', channelJoinMessage)
-    }
-
-    ws.onmessage = (event) => {
-      console.log('Message received:', event.data)
-      const parsedMessage = parseMessage(event.data)
-
-      if (parsedMessage) {
-        setMessages(prev => [...prev, parsedMessage])
-      }
-    }
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error)
-    }
-
-    ws.onclose = () => {
-      console.log('Disconnected from WebSocket')
-      setIsConnected(false)
-    }
-
-    wsRef.current = ws
-
-    // Cleanup on unmount
-    return () => {
-      ws.close()
-    }
   }, [])
 
   // Auto-scroll to bottom when new messages arrive
@@ -80,16 +35,33 @@ function App() {
   function sendMessage(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
-    if (message.trim() && wsRef.current && isConnected) {
+    if (message.trim() && isConnected) {
       const chatMessage = MessageBuilder.chatSend(TEMP_ROOM_ID, message, username)
-      wsRef.current.send(JSON.stringify(chatMessage))
-      console.log('Sent:', chatMessage)
+      wsSendMessage(chatMessage)
       setMessage('')
     }
   }
 
+  function handleLoginSuccess(loggedInUsername: string) {
+    login(loggedInUsername)
+    // Reconnect WebSocket with new token
+    reconnect()
+  }
+
+  function handleLogout() {
+    logout()
+    // Reconnect as guest
+    reconnect()
+  }
+
   return (
     <div className="flex h-screen bg-gray-100">
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onLoginSuccess={handleLoginSuccess}
+      />
+
       {/* Sidebar */}
       <Sidebar
         channels={channels}
@@ -105,12 +77,40 @@ function App() {
             <h1 className="text-2xl font-bold text-gray-800">
               # {channels.find(c => c.id === currentChannelId)?.name || 'chat'}
             </h1>
-            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${isConnected
-              ? 'bg-green-100 text-green-800'
-              : 'bg-red-100 text-red-800'
-              }`}>
-              {isConnected ? '● Connected' : '● Disconnected'}
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600">
+                {isAuthenticated ? (
+                  <>
+                    <span className="font-medium text-gray-800">{displayName}</span>
+                    {' '}
+                    <span className="text-green-600">(authenticated)</span>
+                  </>
+                ) : (
+                  <span className="text-gray-500">Guest mode</span>
+                )}
+              </span>
+              {isAuthenticated ? (
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                >
+                  Logout
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                >
+                  Login
+                </button>
+              )}
+              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${isConnected
+                ? 'bg-green-100 text-green-800'
+                : 'bg-red-100 text-red-800'
+                }`}>
+                {isConnected ? '● Connected' : '● Disconnected'}
+              </span>
+            </div>
           </div>
         </div>
 
