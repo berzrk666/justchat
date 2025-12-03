@@ -12,7 +12,7 @@ import logging
 
 logging.basicConfig(
     level=logging.DEBUG,
-    format="{asctime} - {levelname} - ({filename}::{funcName}) - {message}",
+    format="{asctime}  |  {levelname}  |  {filename}::{funcName}  |  {message}",
     style="{",
     datefmt="%d-%m-%Y %H:%M",
 )
@@ -25,7 +25,7 @@ api_router.include_router(auth.router)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logging.info("Initializing Database.")
+    logging.debug("Initializing Database.")
     await init_db()
     yield
     logging.info("Program Exit.")

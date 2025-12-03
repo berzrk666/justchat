@@ -27,16 +27,25 @@ class ConnectionManager:
     """
 
     def __init__(self) -> None:
-        self.active_connections: dict[WebSocket, ConnectionContext] = {}
-        self.connections_by_user_id: dict[int, ConnectionContext] = {}
-        self.subsmanager = SubscriptionManager()
-
+        # Keep track of all connections and its metadata using ConnectionContext
+        self._active_connections: dict[WebSocket, ConnectionContext] = {}
+        # Faster lookup for a connection using an User ID
+        self._connections_by_user_id: dict[int, ConnectionContext] = {}
         # Map a Channel ID to its own Channel for fast lookups
         self._channels: dict[int, Channel] = {}
+
+        self.subsmanager = SubscriptionManager()
 
     async def connect(self, websocket: WebSocket) -> None:
         """
         Accept and register a new WebSocket connection.
+
+        For the connection to be accepted it needs to send
+        a proper message (HELLO) to the server.
+
+        If the connection is proper, a ConnectionContext will
+        be created that will hold a reference to this connection
+        and metadata about this.
 
         If invalid connection raise a WebSocketDisconnect
         """
@@ -45,7 +54,7 @@ class ConnectionManager:
 
         helo = await websocket.receive_text()
 
-        # Validate the message received
+        # Validate the message received is a proper HELLO
         try:
             data = client.Hello.model_validate_json(helo)
         except ValidationError:
@@ -53,23 +62,20 @@ class ConnectionManager:
             await websocket.close(reason="Invalid HELLO")
             raise WebSocketDisconnect
 
-        # Check if there is a JWT token in the HELLO message
         access_token = data.payload.token
+        # Check if there is a JWT token in the HELLO message
         if not access_token:
             # Handle Guest User
-            logging.debug(f"No Access Access Token in Payload: {access_token =}")
-            user_db = User(username=data.payload.username)
-            conn_data = ConnectionContext(websocket=websocket, user=user_db)
+            user = User(username=data.payload.username)
+            ctx = ConnectionContext(websocket=websocket, user=user)
         else:
             # Handle Authenticated User
-            logging.debug(f"Access Token in Payload: {access_token =}")
             try:
                 token = jwt.decode(
                     access_token,
                     get_settings().SECRET_KEY,
                     algorithms=[ALGORITHM],
                 )
-                logging.debug(f"Token Decoded: {token =}")
                 user_id = token.get("sub")
 
                 # Verify user exists in database
@@ -80,27 +86,30 @@ class ConnectionManager:
                         raise WebSocketDisconnect
 
                 user = User(id=user_db.id, username=user_db.username)
-                conn_data = ConnectionContext(websocket=websocket, user=user)
+                ctx = ConnectionContext(websocket=websocket, user=user)
             except Exception as e:
                 logging.warning(f"Invalid authentication: {e}")
                 await websocket.close(reason="Authentication failed")
                 raise WebSocketDisconnect
 
-            logging.info(f"Created ConnectionContext: {conn_data}")
-            self.active_connections[websocket] = conn_data
-            self.connections_by_user_id[user.id] = conn_data
+        logging.info(f"A user has connected to the server: {repr(ctx)}")
+        self._active_connections[websocket] = ctx
+        # FIX: If the user is a guest there will be an error
+        self._connections_by_user_id[user.id] = ctx
 
-    def get_connection(self, websocket: WebSocket) -> "ConnectionContext | None":
+    def get_connection_context(
+        self, websocket: WebSocket
+    ) -> "ConnectionContext | None":
         """
         Get the ConnectionContext for a given WebSocket.
         """
-        return self.active_connections.get(websocket)
+        return self._active_connections.get(websocket)
 
     def get_connection_by_user_id(self, user_id: int) -> "WebSocket | None":
         """
-        Get the ConnectionContext for a given ID.
+        Get the ConnectionContext for a given User ID.
         """
-        user = self.connections_by_user_id.get(user_id)
+        user = self._connections_by_user_id.get(user_id)
         return user.websocket if user else None
 
     def add_channel(self, channel: Channel):
@@ -108,6 +117,9 @@ class ConnectionManager:
         Add a channel
         """
         self._channels[channel.id] = channel
+        logging.debug(f"{channel = }")
+        logging.debug(f"{self._channels[channel.id] = }")
+        logging.debug(f"{self._channels = }")
 
     def get_channel(self, channel_id: int) -> Channel:
         """
@@ -119,11 +131,11 @@ class ConnectionManager:
         """
         Remove a WebSocket connection from active connections.
         """
-        if websocket in self.active_connections:
-            ctx = self.active_connections.pop(websocket)
+        if websocket in self._active_connections:
+            ctx = self._active_connections.pop(websocket)
             # self.connections_by_id.pop(conn.id, None)
 
-            logging.info(f"<{ctx.user.username}> has disconnected.")
+            logging.info(f"{repr(ctx.user)} has disconnected.")
 
             await self.send_channel_leave(ctx)
 
@@ -133,41 +145,44 @@ class ConnectionManager:
 
     async def handle_message(self, websocket: WebSocket, data: str) -> None:
         """
-        Handle the message received by client appropriately
+        Handle all the messages/data received from the client.
         """
         from chat_server.handler import router
 
         logging.info(f"CLIENT SENT: {data}")
+
         msg = BaseMessage.from_json(data)
         if msg is None:
             logging.warning("Client sent a malformed data.")
             msg = BaseMessage.model_validate_json(data)
             logging.debug(f"{msg =}")
             if msg.type in SERVER_ONLY_MESSAGES:
-                conn = self.get_connection(websocket)
+                ctx = self.get_connection_context(websocket)
                 logging.warning(
-                    f"Client attempted to send server-only message: <{conn.user}> "
+                    f"Client attempted to send server-only message: {repr(ctx.user)} "
                 )
-            await self.send_error(websocket, "Invalid message type")
-            return
+            return await self.send_error(websocket, "Invalid message type")
 
-        ctx = self.get_connection(websocket)
-        if ctx is not None:
+        ctx = self.get_connection_context(websocket)
+        if ctx:
             await router.dispatch(ctx, msg, self)
         else:
-            logging.warning("Received message from unknown connection")
+            logging.warning("Received message from connection without a Context")
 
     async def broadcast(self, message: BaseMessage) -> None:
         msg_str = message.model_dump_json()
 
-        for conn in self.active_connections:
+        for conn in self._active_connections:
             try:
                 await conn.send_text(msg_str)
             except Exception as e:
                 logging.error(
-                    f"Error sending message to {self.active_connections.get(conn).user}: {e}"
+                    f"Error sending message to {self._active_connections.get(conn).user}: {e}"
                 )
 
+    # NOTE: Rename to message_channel() ?
+    # Maybe it should just send a message and let whoever
+    # call it to handle the proper validation of the message ?
     async def send_msg_to_channel(self, message: BaseMessage, channel_id: int) -> None:
         channel = self.get_channel(channel_id)
         # Retrieve all users that is in the channel
@@ -185,16 +200,18 @@ class ConnectionManager:
             username=ctx.user.username, channel_id=channel.id
         )
         join_msg = server.ChannelJoin(timestamp=datetime.now(), payload=payload)
+        logging.info(f"Server sending {join_msg}")
 
         await self.send_msg_to_channel(join_msg, channel.id)
 
     async def send_channel_leave(self, ctx: ConnectionContext) -> None:
         timestamp = datetime.now()
 
-        logging.info(
-            f"{repr(ctx.user)} has left the channels: {self.subsmanager.get_channels_id_from_user(ctx.user)}"
-        )
-        for channel_id in self.subsmanager.get_channels_id_from_user(ctx.user):
+        user_channels = self.subsmanager.get_channels_from_user(ctx.user).copy()
+
+        logging.info(f"{repr(ctx.user)} has left the channels: {user_channels}")
+
+        for channel_id in user_channels:
             self.subsmanager.remove_user_from_channel(ctx.user, channel_id)
 
             payload = server.ChannelLeavePayload(
@@ -220,20 +237,22 @@ class SubscriptionManager:
         Add a User to a Channel
         """
 
+        # TODO: Create a unique ID so you can handle Guest
+        # Something like user_key = str(id) if authenticated or str(random_username) if guest
         if not user.id:
             raise ValueError("Guest users can not join a channel.")
+
         logging.info(f"Subscribing {repr(user)} to {repr(channel)}")
         if channel.id not in self._channel_members:
-            # Initialize
             self._channel_members[channel.id] = set()
-        if user.id not in self._user_channels:
-            # Initialize
-            self._user_channels[user.id] = set()
-
         self._channel_members[channel.id].add(user.id)
+
+        if user.id not in self._user_channels:
+            self._user_channels[user.id] = set()
         self._user_channels[user.id].add(channel.id)
-        logging.debug(f"{self._channel_members = }")
-        logging.debug(f"{self._user_channels = }")
+
+        logging.debug(f"Add: {self._channel_members = }")
+        logging.debug(f"Add: {self._user_channels = }")
 
     def remove_user_from_channel(self, user: User, channel_id: int):
         """

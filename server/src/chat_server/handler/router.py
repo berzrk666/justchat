@@ -22,7 +22,7 @@ async def dispatch(
 
     handler = HANDLERS.get(message.type)
     logging.debug(
-        f"Dispatch Handler: {handler.__name__ if handler else 'Unknown Handler'} "
+        f"This handler was invoked: {handler.__name__ if handler else 'Unknown Handler'} "
     )
 
     if handler is None:

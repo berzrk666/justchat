@@ -41,6 +41,7 @@ class ChatSend(BaseMessage):
 # ========================
 class ChannelJoinPayload(BaseModel):
     model_config = {"extra": "forbid"}
+    # TODO: Why send an username? The server should keep track of the username
     username: str
     channel_id: int
 
