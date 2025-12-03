@@ -7,48 +7,112 @@ import { Sidebar } from './components/Sidebar'
 import { LoginModal } from './components/LoginModal'
 import { useUser } from './contexts/UserContext'
 import { useWebSocket } from './contexts/WebSocketContext'
+import type { Message } from './types/messages'
+
+interface Channel {
+  id: number
+  name: string
+}
 
 function App() {
   const { username, displayName, isAuthenticated, login, logout } = useUser()
   const { isConnected, isReady, messages, sendMessage: wsSendMessage, reconnect } = useWebSocket()
   const [message, setMessage] = useState('')
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
-  const [channels] = useState([
-    { id: '1', name: 'general' },
-    { id: '2', name: 'random' }
-  ])
-  const [currentChannelId, setCurrentChannelId] = useState('1')
+  const [channels, setChannels] = useState<Channel[]>([])
+  const [currentChannelId, setCurrentChannelId] = useState<number | null>(null)
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
+  const [joinChannelId, setJoinChannelId] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const hasJoinedChannel = useRef(false)
+  const joinedChannelsRef = useRef<Set<number>>(new Set())
 
   // Initialize message handlers on mount
   useEffect(() => {
     initializeMessageHandlers()
   }, [])
 
-  // Send channel join when WebSocket is ready
+  // Reset joined channels when connection is lost
   useEffect(() => {
-    if (isReady && !hasJoinedChannel.current) {
-      const channelJoinMessage = MessageBuilder.channelJoin(parseInt(currentChannelId), username)
-      wsSendMessage(channelJoinMessage)
-      console.log('Sent Channel Join:', channelJoinMessage)
-      hasJoinedChannel.current = true
-    } else if (!isReady) {
-      // Reset flag when connection is lost
-      hasJoinedChannel.current = false
+    if (!isReady) {
+      joinedChannelsRef.current.clear()
     }
-  }, [isReady, currentChannelId, username, wsSendMessage])
+  }, [isReady])
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Filter messages for current channel
+  const filteredMessages = currentChannelId !== null
+    ? messages.filter((msg: Message) => {
+        // Filter CHAT_SEND messages by channel_id
+        if (msg.type === 'chat_send' && 'channel_id' in msg.payload) {
+          return msg.payload.channel_id === currentChannelId
+        }
+        // Show channel join/leave messages for current channel
+        if ((msg.type === 'channel_join' || msg.type === 'channel_leave') && 'channel_id' in msg.payload) {
+          return msg.payload.channel_id === currentChannelId
+        }
+        // Show errors in current channel
+        if (msg.type === 'error') {
+          return true
+        }
+        return false
+      })
+    : []
+
+  function handleJoinChannel(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+
+    const channelId = parseInt(joinChannelId)
+    if (isNaN(channelId) || channelId < 0) {
+      alert('Please enter a valid channel ID (positive number)')
+      return
+    }
+
+    // Check if already joined
+    if (joinedChannelsRef.current.has(channelId)) {
+      alert('You have already joined this channel')
+      setIsJoinModalOpen(false)
+      setJoinChannelId('')
+      return
+    }
+
+    // Send join request
+    const channelJoinMessage = MessageBuilder.channelJoin(channelId, username)
+    wsSendMessage(channelJoinMessage)
+
+    // Add to joined channels
+    joinedChannelsRef.current.add(channelId)
+
+    // Add to channels list if not already there
+    if (!channels.find(c => c.id === channelId)) {
+      setChannels(prev => [...prev, { id: channelId, name: `Channel ${channelId}` }])
+    }
+
+    // Set as current channel
+    setCurrentChannelId(channelId)
+
+    // Close modal
+    setIsJoinModalOpen(false)
+    setJoinChannelId('')
+  }
+
+  function handleChannelSelect(channelId: number) {
+    setCurrentChannelId(channelId)
+  }
+
   function sendMessage(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
+    if (!currentChannelId) {
+      alert('Please join a channel first')
+      return
+    }
+
     if (message.trim() && isConnected) {
-      const chatMessage = MessageBuilder.chatSend(parseInt(currentChannelId), message)
+      const chatMessage = MessageBuilder.chatSend(currentChannelId, message)
       wsSendMessage(chatMessage)
       setMessage('')
     }
@@ -74,11 +138,56 @@ function App() {
         onLoginSuccess={handleLoginSuccess}
       />
 
+      {/* Join Channel Modal */}
+      {isJoinModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 shadow-xl">
+            <h2 className="text-xl font-bold mb-4">Join Channel</h2>
+            <form onSubmit={handleJoinChannel}>
+              <div className="mb-4">
+                <label htmlFor="channelId" className="block text-sm font-medium text-gray-700 mb-2">
+                  Channel ID
+                </label>
+                <input
+                  id="channelId"
+                  type="number"
+                  value={joinChannelId}
+                  onChange={(e) => setJoinChannelId(e.target.value)}
+                  placeholder="Enter channel ID (e.g., 1)"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                  min="0"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsJoinModalOpen(false)
+                    setJoinChannelId('')
+                  }}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
+                >
+                  Join
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <Sidebar
         channels={channels}
         currentChannelId={currentChannelId}
-        onChannelSelect={setCurrentChannelId}
+        onChannelSelect={handleChannelSelect}
+        onAddChannel={() => setIsJoinModalOpen(true)}
       />
 
       {/* Main Chat Area */}
@@ -87,7 +196,9 @@ function App() {
         <div className="bg-white border-b border-gray-200 p-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-800">
-              # {channels.find(c => c.id === currentChannelId)?.name || 'chat'}
+              {currentChannelId !== null
+                ? `# ${channels.find(c => c.id === currentChannelId)?.name || `Channel ${currentChannelId}`}`
+                : '# Select a channel'}
             </h1>
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-600">
@@ -128,11 +239,21 @@ function App() {
 
         {/* Messages Display */}
         <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
-          {messages.length === 0 ? (
-            <p className="text-gray-400 text-center mt-8">No messages yet...</p>
+          {currentChannelId === null ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-400">
+              <p className="text-lg mb-4">No channel selected</p>
+              <button
+                onClick={() => setIsJoinModalOpen(true)}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              >
+                Join a Channel
+              </button>
+            </div>
+          ) : filteredMessages.length === 0 ? (
+            <p className="text-gray-400 text-center mt-8">No messages in this channel yet...</p>
           ) : (
             <div className="space-y-3 max-w-4xl mx-auto">
-              {messages.map((msg, index) => (
+              {filteredMessages.map((msg, index) => (
                 <MessageRenderer
                   key={msg.correlation_id || `${msg.timestamp}-${index}`}
                   message={msg}
@@ -151,13 +272,17 @@ function App() {
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder={`Message #${channels.find(c => c.id === currentChannelId)?.name || 'chat'}`}
+              placeholder={
+                currentChannelId !== null
+                  ? `Message #${channels.find(c => c.id === currentChannelId)?.name || `Channel ${currentChannelId}`}`
+                  : 'Join a channel to send messages'
+              }
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={!isConnected}
+              disabled={!isConnected || currentChannelId === null}
             />
             <button
               type="submit"
-              disabled={!isConnected || !message.trim()}
+              disabled={!isConnected || !message.trim() || currentChannelId === null}
               className="px-6 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               Send

@@ -2,17 +2,18 @@ import { useState } from 'react'
 import { useUser } from '../contexts/UserContext'
 
 interface Channel {
-  id: string
+  id: number
   name: string
 }
 
 interface SidebarProps {
   channels: Channel[]
-  currentChannelId?: string
-  onChannelSelect?: (channelId: string) => void
+  currentChannelId: number | null
+  onChannelSelect?: (channelId: number) => void
+  onAddChannel?: () => void
 }
 
-export function Sidebar({ channels, currentChannelId, onChannelSelect }: SidebarProps) {
+export function Sidebar({ channels, currentChannelId, onChannelSelect, onAddChannel }: SidebarProps) {
   const { username, displayName, setUsername, avatarColor } = useUser()
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(displayName)
@@ -91,8 +92,9 @@ export function Sidebar({ channels, currentChannelId, onChannelSelect }: Sidebar
               Channels
             </h2>
             <button
+              onClick={onAddChannel}
               className="p-1 hover:bg-gray-700 rounded transition-colors"
-              title="Add channel"
+              title="Join channel"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
