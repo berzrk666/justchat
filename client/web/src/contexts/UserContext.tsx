@@ -4,7 +4,6 @@ import { tokenStorage } from '../services/tokenStorage'
 interface UserContextType {
   username: string
   displayName: string
-  guestNumber: string
   setUsername: (username: string) => void
   avatarColor: string
   isAuthenticated: boolean
@@ -13,10 +12,6 @@ interface UserContextType {
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
-
-function generateGuestNumber(): string {
-  return Math.floor(1000 + Math.random() * 9000).toString()
-}
 
 function generateAvatarColor(): string {
   const colors = [
@@ -37,14 +32,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return tokenStorage.hasValidToken()
   })
 
-  const [guestNumber] = useState<string>(() => {
-    const stored = localStorage.getItem('chat-guest-number')
-    if (stored) return stored
-    const newNumber = generateGuestNumber()
-    localStorage.setItem('chat-guest-number', newNumber)
-    return newNumber
-  })
-
   const [displayName, setDisplayName] = useState<string>(() => {
     const stored = localStorage.getItem('chat-display-name')
     return stored || 'Guest'
@@ -55,7 +42,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return stored || generateAvatarColor()
   })
 
-  const username = `${displayName}#${guestNumber}`
+  // Username is now just the displayName, no #number suffix
+  const username = displayName
 
   useEffect(() => {
     localStorage.setItem('chat-display-name', displayName)
@@ -86,7 +74,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       value={{
         username,
         displayName,
-        guestNumber,
         setUsername,
         avatarColor,
         isAuthenticated,

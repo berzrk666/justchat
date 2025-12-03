@@ -13,7 +13,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ channels, currentChannelId, onChannelSelect }: SidebarProps) {
-  const { username, displayName, guestNumber, setUsername, avatarColor } = useUser()
+  const { username, displayName, setUsername, avatarColor } = useUser()
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(displayName)
 
@@ -55,19 +55,16 @@ export function Sidebar({ channels, currentChannelId, onChannelSelect }: Sidebar
           {/* Username Display/Edit */}
           <div className="flex-1 min-w-0">
             {isEditing ? (
-              <div className="flex items-center gap-1">
-                <input
-                  type="text"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onBlur={handleSave}
-                  autoFocus
-                  maxLength={20}
-                  className="bg-gray-700 text-white px-2 py-1 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-1"
-                />
-                <span className="text-gray-400 text-sm">#{guestNumber}</span>
-              </div>
+              <input
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                onBlur={handleSave}
+                autoFocus
+                maxLength={20}
+                className="bg-gray-700 text-white px-2 py-1 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              />
             ) : (
               <div className="flex items-center gap-2 group">
                 <span className="font-semibold truncate">{username}</span>
