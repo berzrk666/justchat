@@ -48,6 +48,7 @@ class ConnectionManager:
 
         helo = await websocket.receive_text()
 
+        # Validate the message received
         try:
             data = Hello.model_validate_json(helo)
         except ValidationError:
@@ -55,6 +56,7 @@ class ConnectionManager:
             await websocket.close(reason="Invalid HELLO")
             raise WebSocketDisconnect
 
+        # Check if there is a JWT token in the HELLO message
         access_token = data.payload.token
         if not access_token:
             # Handle Guest User
