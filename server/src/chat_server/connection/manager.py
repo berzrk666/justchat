@@ -241,18 +241,29 @@ class SubscriptionManager:
         """
         logging.info(f"Removing {repr(user)} from {repr(channel_id)}")
 
-        self._channel_members[channel_id].remove(user.id)
+        # Remove the user from the channel
+        if channel_id in self._channel_members:
+            self._channel_members[channel_id].discard(user.id)
+
+        # Remove the channel from the user's channel
+        if user.id in self._user_channels:
+            self._user_channels[user.id].discard(channel_id)
+
+        logging.debug(f"Removal: {self._channel_members = }")
+        logging.debug(f"Removal: {self._user_channels = }")
 
     def get_users_in_channel(self, channel: Channel) -> set[int]:
         """
         Retrieve all Users ID connected to a Channel.
+
         Returns empty set if channel has no members.
         """
         return self._channel_members.get(channel.id, set())
 
-    def get_channels_id_from_user(self, user: User) -> set[int]:
+    def get_channels_from_user(self, user: User) -> set[int]:
         """
         Retrieve all channels a User is connected to.
+
         Returns empty set if user hasn't joined any channels.
         """
         logging.debug(f"{self._user_channels = }")
