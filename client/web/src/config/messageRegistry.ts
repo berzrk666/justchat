@@ -17,9 +17,9 @@ export function initializeMessageHandlers() {
   registerParser(MessageType.CHAT_SEND, (data) => data as any);
   registerRenderer(MessageType.CHAT_SEND, ChatSendMessageComponent);
 
-  // CHANNEL_JOIN_REQUEST
-  registerParser(MessageType.CHANNEL_JOIN_REQUEST, (data) => data as any);
-  registerRenderer(MessageType.CHANNEL_JOIN_REQUEST, ChannelJoinMessage);
+  // CHANNEL_JOIN (server broadcasts when someone joins)
+  registerParser(MessageType.CHANNEL_JOIN, (data) => data as any);
+  registerRenderer(MessageType.CHANNEL_JOIN, ChannelJoinMessage);
 
   // CHANNEL_LEAVE
   registerParser(MessageType.CHANNEL_LEAVE, (data) => data as any);

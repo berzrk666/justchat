@@ -3,6 +3,7 @@ export const MessageType = {
   CHAT_SEND: "chat_send",
   CHAT_BROADCAST: "chat_broadcast",
   CHANNEL_JOIN_REQUEST: "channel_join_request",
+  CHANNEL_JOIN: "channel_join",
   CHANNEL_LEAVE: "channel_leave",
   ERROR: "error",
   // Future types go here
@@ -75,6 +76,17 @@ export interface ChannelJoinRequestMessage extends BaseMessage {
   payload: ChannelJoinRequestPayload;
 }
 
+// Channel Join (server broadcasts this when user joins)
+export interface ChannelJoinPayload {
+  username: string;
+  channel_id: number;
+}
+
+export interface ChannelJoinMessage extends BaseMessage {
+  type: typeof MessageType.CHANNEL_JOIN;
+  payload: ChannelJoinPayload;
+}
+
 // Channel Leave (server sends this when user disconnects)
 export interface ChannelLeavePayload {
   username: string;
@@ -98,4 +110,4 @@ export interface ErrorMessage extends BaseMessage {
 
 // Union type - add more here as you implement them
 // Note: ChatSendBroadcastMessage is what we receive from server (has sender field)
-export type Message = ChatSendBroadcastMessage | ChatBroadcastMessage | ChannelJoinRequestMessage | ChannelLeaveMessage | ErrorMessage;
+export type Message = ChatSendBroadcastMessage | ChatBroadcastMessage | ChannelJoinMessage | ChannelLeaveMessage | ErrorMessage;
