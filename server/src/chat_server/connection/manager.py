@@ -5,6 +5,7 @@ from fastapi.websockets import WebSocketDisconnect
 import jwt
 from pydantic import ValidationError
 
+from chat_server.connection.channel import Channel
 from chat_server.connection.context import ConnectionContext
 from chat_server.connection.user import User
 from chat_server.db import crud
@@ -34,8 +35,11 @@ class ConnectionManager:
 
     def __init__(self) -> None:
         self.active_connections: dict[WebSocket, ConnectionContext] = {}
-        self.connections_by_id: dict[int, ConnectionContext] = {}
+        self.connections_by_user_id: dict[int, ConnectionContext] = {}
+        self.subsmanager = SubscriptionManager()
+
         self._count: int = 0
+        self._channels: dict[int, Channel] = {}
 
     async def connect(self, websocket: WebSocket) -> None:
         """
@@ -62,7 +66,7 @@ class ConnectionManager:
         if not access_token:
             # Handle Guest User
             logging.debug(f"No Access Access Token in Payload: {access_token =}")
-            user_db = User(is_guest=True, username=data.payload.username)
+            user_db = User(username=data.payload.username)
             conn_data = ConnectionContext(websocket=websocket, user=user_db)
         else:
             # Handle Authenticated User
@@ -83,16 +87,16 @@ class ConnectionManager:
                         await websocket.close(reason="User does not exist")
                         raise WebSocketDisconnect
 
-                user = User(is_guest=False, id=user_db.id, username=user_db.username)
+                user = User(id=user_db.id, username=user_db.username)
                 conn_data = ConnectionContext(websocket=websocket, user=user)
             except Exception as e:
                 logging.warning(f"Invalid authentication: {e}")
                 await websocket.close(reason="Authentication failed")
                 raise WebSocketDisconnect
 
-        logging.info(f"Created ConnectionContext: {conn_data}")
-        self.active_connections[websocket] = conn_data
-        # self.connections_by_id[conn_data.id] = conn_data
+            logging.info(f"Created ConnectionContext: {conn_data}")
+            self.active_connections[websocket] = conn_data
+            self.connections_by_user_id[user.id] = conn_data
 
     def get_connection(self, websocket: WebSocket) -> "ConnectionContext | None":
         """
@@ -100,11 +104,24 @@ class ConnectionManager:
         """
         return self.active_connections.get(websocket)
 
-    def get_connection_by_id(self, conn_id: int) -> "ConnectionContext | None":
+    def get_connection_by_user_id(self, user_id: int) -> "WebSocket | None":
         """
         Get the ConnectionContext for a given ID.
         """
-        return self.connections_by_id.get(conn_id)
+        user = self.connections_by_user_id.get(user_id)
+        return user.websocket if user else None
+
+    def add_channel(self, channel: Channel):
+        """
+        Add a channel
+        """
+        self._channels[channel.id] = channel
+
+    def get_channel(self, channel_id: int) -> Channel:
+        """
+        Get a channel using its ID
+        """
+        return self._channels[channel_id]
 
     async def disconnect(self, websocket: WebSocket) -> None:
         """
@@ -160,6 +177,16 @@ class ConnectionManager:
                     f"Error sending message to {self.active_connections.get(conn).user}: {e}"
                 )
 
+    async def send_msg_to_channel(self, message: BaseMessage, channel_id: int) -> None:
+        channel = self.get_channel(channel_id)
+        users_id_in_channel = self.subsmanager.get_users_in_channel(channel)
+        for user_id in users_id_in_channel:
+            conn = self.get_connection_by_user_id(user_id)
+            if conn:
+                await conn.send_text(message.model_dump_json())
+            else:
+                logging.error(f"Couldn't send message to UserID: {user_id}")
+
     async def send_channel_join(self, ctx: ConnectionContext) -> None:
         payload = ChannelJoinPayload(username=ctx.user.username, channel_id=0)
         join_msg = ChannelJoin(timestamp=datetime.now(), payload=payload)
@@ -171,3 +198,41 @@ class ConnectionManager:
         leave_msg = ChannelLeave(timestamp=datetime.now(), payload=payload)
 
         await self.broadcast(leave_msg)
+
+
+class SubscriptionManager:
+    """
+    Manage the User and Channel relation. Keep track of "who" is connected to "where".
+    """
+
+    def __init__(self) -> None:
+        # Maps Channel_ID to a Set of User_ID
+        self._channel_members: dict[int, set[int]] = {}
+        # Maps User_ID to a set of Channel_ID
+        self._user_channels: dict[int, set[int]] = {}
+
+    def add_user_to_channel(self, user: User, channel: Channel):
+        """
+        Add a User to a Channel
+        """
+
+        if not user.id:
+            raise ValueError("Guest users can not join a channel.")
+        logging.info(f"Subscribing {repr(user)} to {repr(channel)}")
+        if channel.id not in self._channel_members:
+            # Initialize
+            self._channel_members[channel.id] = set()
+        if user.id not in self._user_channels:
+            # Initialize
+            self._user_channels[user.id] = set()
+
+        self._channel_members[channel.id].add(user.id)
+        self._user_channels[user.id].add(channel.id)
+        logging.debug(f"{self._channel_members = }")
+        logging.debug(f"{self._user_channels = }")
+
+    def get_users_in_channel(self, channel: Channel) -> set[int]:
+        """
+        Retrieve all Users ID connected to a Channel
+        """
+        return self._channel_members[channel.id]

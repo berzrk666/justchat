@@ -11,7 +11,11 @@ async def handler_chat_send(
     """
     Handle an incoming message of the type ChatSend
     """
-    msg_in = ChatSend.model_validate(message)
-    logging.info(f"SERVER SEND -> {msg_in.model_dump_json()}")
-
-    await manager.broadcast(msg_in)
+    try:
+        msg_in = ChatSend.model_validate(message)
+        logging.info(f"SERVER SEND -> {msg_in.model_dump_json()}")
+        await manager.broadcast(msg_in)
+        await manager.send_msg_to_channel(msg_in, msg_in.payload.channel_id)
+    except Exception as e:
+        await manager.send_error(ctx.websocket, "Invalid message")
+        logging.error(f"Couldn't process User <ChatSend>: {e}")

@@ -18,7 +18,7 @@ class BaseMessage(BaseModel):
     Base Message Class containg absolute necessary information.
     """
 
-    type: MessageType
+    type: Any
     # NOTE: Maybe add a subtype ? E.g. type: SYSTEM, subtype: BROADCAST
     timestamp: datetime
     correlation_id: UUID4 | None = None
@@ -68,8 +68,7 @@ class Hello(BaseMessage):
 ###################
 class ChatSendPayload(BaseModel):
     model_config = {"extra": "forbid"}
-    room_id: UUID4
-    sender: str
+    channel_id: int
     content: str
 
 
