@@ -1,13 +1,14 @@
-import type { ChatSendMessage } from '../../types/messages';
+import type { ChatSendBroadcastMessage } from '../../types/messages';
 
 interface ChatSendMessageProps {
-  message: ChatSendMessage;
+  message: ChatSendBroadcastMessage;
   currentUsername?: string;
 }
 
 export function ChatSendMessageComponent({ message, currentUsername }: ChatSendMessageProps) {
   const { payload, timestamp } = message;
-  const isOwnMessage = currentUsername && payload.sender === currentUsername;
+  const sender = payload.sender || "Unknown";
+  const isOwnMessage = currentUsername && sender === currentUsername;
 
   if (isOwnMessage) {
     // Own message - aligned right with green styling
@@ -37,11 +38,11 @@ export function ChatSendMessageComponent({ message, currentUsername }: ChatSendM
           {/* Message header */}
           <div className="flex items-center gap-2 mb-2">
             <div className="flex items-center justify-center w-8 h-8 bg-blue-500 text-white rounded-full font-semibold text-sm">
-              {(payload.sender || "A")[0].toUpperCase()}
+              {sender[0].toUpperCase()}
             </div>
             <div className="flex flex-col">
               <span className="font-semibold text-gray-900">
-                {payload.sender || "Anonymous"}
+                {sender}
               </span>
               <span className="text-xs text-gray-500">
                 {new Date(timestamp).toLocaleTimeString()}

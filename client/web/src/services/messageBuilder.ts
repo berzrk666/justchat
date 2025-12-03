@@ -14,14 +14,13 @@ export class MessageBuilder {
     };
   }
 
-  static chatSend(roomId: string, content: string, sender: string): ChatSendMessage {
+  static chatSend(channelId: number, content: string): ChatSendMessage {
     return {
       type: MessageType.CHAT_SEND,
       timestamp: new Date().toISOString(),
       correlation_id: crypto.randomUUID(),
       payload: {
-        room_id: roomId,
-        sender: sender,
+        channel_id: channelId,
         content: content,
       },
     };

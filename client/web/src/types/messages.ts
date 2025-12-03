@@ -28,16 +28,27 @@ export interface HelloMessage extends BaseMessage {
   payload: HelloPayload;
 }
 
-// Client sends this
+// Client sends this (to server)
 export interface ChatSendPayload {
-  room_id: string;
-  sender: string;
+  channel_id: number;
   content: string;
 }
 
 export interface ChatSendMessage extends BaseMessage {
   type: typeof MessageType.CHAT_SEND;
   payload: ChatSendPayload;
+}
+
+// Server broadcasts this (back to all clients with sender info)
+export interface ChatSendBroadcastPayload {
+  channel_id: number;
+  sender: string;
+  content: string;
+}
+
+export interface ChatSendBroadcastMessage extends BaseMessage {
+  type: typeof MessageType.CHAT_SEND;
+  payload: ChatSendBroadcastPayload;
 }
 
 // Server sends this (broadcast to room)
@@ -86,4 +97,5 @@ export interface ErrorMessage extends BaseMessage {
 }
 
 // Union type - add more here as you implement them
-export type Message = ChatBroadcastMessage | ChannelJoinRequestMessage | ChatSendMessage | ChannelLeaveMessage | ErrorMessage;
+// Note: ChatSendBroadcastMessage is what we receive from server (has sender field)
+export type Message = ChatSendBroadcastMessage | ChatBroadcastMessage | ChannelJoinRequestMessage | ChannelLeaveMessage | ErrorMessage;

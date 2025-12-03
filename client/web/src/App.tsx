@@ -11,8 +11,6 @@ import { useWebSocket } from './contexts/WebSocketContext'
 function App() {
   const { username, displayName, isAuthenticated, login, logout } = useUser()
   const { isConnected, isReady, messages, sendMessage: wsSendMessage, reconnect } = useWebSocket()
-  // TODO: Replace with actual room ID management
-  const TEMP_ROOM_ID = useRef(crypto.randomUUID()).current
   const [message, setMessage] = useState('')
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [channels] = useState([
@@ -50,7 +48,7 @@ function App() {
     e.preventDefault()
 
     if (message.trim() && isConnected) {
-      const chatMessage = MessageBuilder.chatSend(TEMP_ROOM_ID, message, username)
+      const chatMessage = MessageBuilder.chatSend(parseInt(currentChannelId), message)
       wsSendMessage(chatMessage)
       setMessage('')
     }
