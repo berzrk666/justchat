@@ -10,16 +10,9 @@ from chat_server.connection.context import ConnectionContext
 from chat_server.connection.user import User
 from chat_server.db import crud
 from chat_server.db.db import async_session
+from chat_server.protocol import client, server
 from chat_server.protocol.enums import MessageType
-from chat_server.protocol.message import (
-    BaseMessage,
-    ChannelJoin,
-    ChannelJoinPayload,
-    ChannelLeave,
-    ChannelLeavePayload,
-    Hello,
-    ErrorMessage,
-)
+from chat_server.protocol.message import BaseMessage, ErrorMessage
 from chat_server.security.utils import ALGORITHM
 from chat_server.settings import get_settings
 
@@ -55,7 +48,7 @@ class ConnectionManager:
 
         # Validate the message received
         try:
-            data = Hello.model_validate_json(helo)
+            data = client.Hello.model_validate_json(helo)
         except ValidationError:
             logging.warning(f"Expected HELLO message. Got: {helo}")
             await websocket.close(reason="Invalid HELLO")
@@ -188,14 +181,14 @@ class ConnectionManager:
                 logging.error(f"Couldn't send message to UserID: {user_id}")
 
     async def send_channel_join(self, ctx: ConnectionContext) -> None:
-        payload = ChannelJoinPayload(username=ctx.user.username, channel_id=0)
-        join_msg = ChannelJoin(timestamp=datetime.now(), payload=payload)
+        payload = server.ChannelJoinPayload(username=ctx.user.username, channel_id=0)
+        join_msg = server.ChannelJoin(timestamp=datetime.now(), payload=payload)
 
         await self.broadcast(join_msg)
 
     async def send_channel_leave(self, ctx: ConnectionContext) -> None:
-        payload = ChannelLeavePayload(username=ctx.user.username, channel_id=0)
-        leave_msg = ChannelLeave(timestamp=datetime.now(), payload=payload)
+        payload = server.ChannelLeavePayload(username=ctx.user.username, channel_id=0)
+        leave_msg = server.ChannelLeave(timestamp=datetime.now(), payload=payload)
 
         await self.broadcast(leave_msg)
 

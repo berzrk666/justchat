@@ -3,7 +3,8 @@ import logging
 from chat_server.connection.channel import Channel
 from chat_server.connection.context import ConnectionContext
 from chat_server.connection.manager import ConnectionManager
-from chat_server.protocol.message import BaseMessage, ChannelJoin
+from chat_server.protocol import client
+from chat_server.protocol.message import BaseMessage
 
 
 async def handle_channel_join(
@@ -12,7 +13,7 @@ async def handle_channel_join(
     """
     Handle incoming message from Channel Join
     """
-    msg_in = ChannelJoin.model_validate(message)
+    msg_in = client.ChannelJoin.model_validate(message)
     logging.debug(f"SERVER SENDING -> {msg_in.model_dump_json()}")
     # TODO: Verify if user can join the channel.
     channel = Channel(
