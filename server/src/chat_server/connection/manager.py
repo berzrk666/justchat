@@ -6,6 +6,7 @@ import jwt
 from pydantic import ValidationError
 
 from chat_server.connection.context import ConnectionContext
+from chat_server.connection.user import User
 from chat_server.db import crud
 from chat_server.db.db import async_session
 from chat_server.protocol.enums import MessageType
@@ -61,9 +62,8 @@ class ConnectionManager:
         if not access_token:
             # Handle Guest User
             logging.debug(f"No Access Access Token in Payload: {access_token =}")
-            conn_data = ConnectionContext(
-                websocket=websocket, username=data.payload.username
-            )
+            user_db = User(is_guest=True, username=data.payload.username)
+            conn_data = ConnectionContext(websocket=websocket, user=user_db)
         else:
             # Handle Authenticated User
             logging.debug(f"Access Token in Payload: {access_token =}")
@@ -78,14 +78,13 @@ class ConnectionManager:
 
                 # Verify user exists in database
                 async with async_session() as session:
-                    user = await crud.get_user_by_id(session, user_id)
-                    if not user:
+                    user_db = await crud.get_user_by_id(session, user_id)
+                    if not user_db:
                         await websocket.close(reason="User does not exist")
                         raise WebSocketDisconnect
 
-                conn_data = ConnectionContext(
-                    websocket=websocket, id=user.id, username=user.username
-                )
+                user = User(is_guest=False, id=user_db.id, username=user_db.username)
+                conn_data = ConnectionContext(websocket=websocket, user=user)
             except Exception as e:
                 logging.warning(f"Invalid authentication: {e}")
                 await websocket.close(reason="Authentication failed")
@@ -139,7 +138,7 @@ class ConnectionManager:
             if msg.type in SERVER_ONLY_MESSAGES:
                 conn = self.get_connection(websocket)
                 logging.warning(
-                    f"Client attempted to send server-only message: <{conn.username}> "
+                    f"Client attempted to send server-only message: <{conn.user}> "
                 )
             await self.send_error(websocket, "Invalid message type")
             return
@@ -158,17 +157,17 @@ class ConnectionManager:
                 await conn.send_text(msg_str)
             except Exception as e:
                 logging.error(
-                    f"Error sending message to {self.active_connections.get(conn).username}: {e}"
+                    f"Error sending message to {self.active_connections.get(conn).user}: {e}"
                 )
 
     async def send_channel_join(self, ctx: ConnectionContext) -> None:
-        payload = ChannelJoinPayload(username=ctx.username, channel_id=0)
+        payload = ChannelJoinPayload(username=ctx.user.username, channel_id=0)
         join_msg = ChannelJoin(timestamp=datetime.now(), payload=payload)
 
         await self.broadcast(join_msg)
 
     async def send_channel_leave(self, ctx: ConnectionContext) -> None:
-        payload = ChannelLeavePayload(username=ctx.username, channel_id=0)
+        payload = ChannelLeavePayload(username=ctx.user.username, channel_id=0)
         leave_msg = ChannelLeave(timestamp=datetime.now(), payload=payload)
 
         await self.broadcast(leave_msg)
