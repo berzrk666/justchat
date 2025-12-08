@@ -1,24 +1,35 @@
 import { MessageType } from '../types/messages';
-import type { HelloMessage, ChatSendMessage, ChannelJoinRequestMessage } from '../types/messages';
+import type {
+  HelloMessageClientToServer,
+  ChatSendMessageClientToServer,
+  ChannelJoinMessageClientToServer,
+} from '../types/messages';
 
 export class MessageBuilder {
-  static hello(username: string, token?: string): HelloMessage {
+  /**
+   * Build HELLO message (Client → Server).
+   * Server will respond with HELLO containing assigned username for guests.
+   */
+  static hello(token?: string): HelloMessageClientToServer {
     return {
       type: MessageType.HELLO,
       timestamp: new Date().toISOString(),
-      correlation_id: crypto.randomUUID(),
+      id: crypto.randomUUID(),
       payload: {
-        username: username,
         ...(token && { token }), // Include token only if provided
       },
     };
   }
 
-  static chatSend(channelId: number, content: string): ChatSendMessage {
+  /**
+   * Build CHAT_SEND message (Client → Server).
+   * Server will broadcast to channel with sender info.
+   */
+  static chatSend(channelId: number, content: string): ChatSendMessageClientToServer {
     return {
       type: MessageType.CHAT_SEND,
       timestamp: new Date().toISOString(),
-      correlation_id: crypto.randomUUID(),
+      id: crypto.randomUUID(),
       payload: {
         channel_id: channelId,
         content: content,
@@ -26,14 +37,17 @@ export class MessageBuilder {
     };
   }
 
-  static channelJoin(channelId: number, username: string): ChannelJoinRequestMessage {
+  /**
+   * Build CHANNEL_JOIN message (Client → Server).
+   * Server will broadcast join notification to channel members.
+   */
+  static channelJoin(channelId: number): ChannelJoinMessageClientToServer {
     return {
-      type: MessageType.CHANNEL_JOIN_REQUEST,
+      type: MessageType.CHANNEL_JOIN,
       timestamp: new Date().toISOString(),
-      correlation_id: crypto.randomUUID(),
+      id: crypto.randomUUID(),
       payload: {
         channel_id: channelId,
-        username: username,
       },
     };
   }

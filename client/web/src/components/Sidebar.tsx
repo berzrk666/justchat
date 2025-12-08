@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useUser } from '../contexts/UserContext'
 
 interface Channel {
@@ -14,34 +13,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ channels, currentChannelId, onChannelSelect, onAddChannel }: SidebarProps) {
-  const { username, displayName, setUsername, avatarColor } = useUser()
-  const [isEditing, setIsEditing] = useState(false)
-  const [editValue, setEditValue] = useState(displayName)
-
-  const handleEditClick = () => {
-    setIsEditing(true)
-    setEditValue(displayName)
-  }
-
-  const handleSave = () => {
-    if (editValue.trim()) {
-      setUsername(editValue.trim())
-    }
-    setIsEditing(false)
-  }
-
-  const handleCancel = () => {
-    setEditValue(displayName)
-    setIsEditing(false)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSave()
-    } else if (e.key === 'Escape') {
-      handleCancel()
-    }
-  }
+  const { username, avatarColor } = useUser()
 
   return (
     <div className="w-64 bg-gray-800 text-white flex flex-col h-screen">
@@ -53,33 +25,9 @@ export function Sidebar({ channels, currentChannelId, onChannelSelect, onAddChan
             {username[0].toUpperCase()}
           </div>
 
-          {/* Username Display/Edit */}
+          {/* Username Display (server-assigned, not editable) */}
           <div className="flex-1 min-w-0">
-            {isEditing ? (
-              <input
-                type="text"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onKeyDown={handleKeyDown}
-                onBlur={handleSave}
-                autoFocus
-                maxLength={20}
-                className="bg-gray-700 text-white px-2 py-1 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
-              />
-            ) : (
-              <div className="flex items-center gap-2 group">
-                <span className="font-semibold truncate">{username}</span>
-                <button
-                  onClick={handleEditClick}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-700 rounded"
-                  title="Edit username"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                </button>
-              </div>
-            )}
+            <span className="font-semibold truncate">{username}</span>
           </div>
         </div>
       </div>

@@ -6,10 +6,13 @@ import { UserProvider, useUser } from './contexts/UserContext'
 import { WebSocketProvider } from './contexts/WebSocketContext'
 
 function AppWithWebSocket() {
-  const { username } = useUser()
+  const { username, setUsername } = useUser()
 
   return (
-    <WebSocketProvider username={username}>
+    <WebSocketProvider
+      username={username}
+      onUsernameAssigned={setUsername}
+    >
       <App />
     </WebSocketProvider>
   )

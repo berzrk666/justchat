@@ -1,14 +1,21 @@
-import type { ChatSendBroadcastMessage } from '../../types/messages';
+import type { ChatSendMessageServerToClient } from '../../types/messages';
 
 interface ChatSendMessageProps {
-  message: ChatSendBroadcastMessage;
+  message: ChatSendMessageServerToClient;
   currentUsername?: string;
 }
 
 export function ChatSendMessageComponent({ message, currentUsername }: ChatSendMessageProps) {
   const { payload, timestamp } = message;
-  const sender = payload.sender || "Unknown";
+  const sender = payload.sender?.username || "Unknown";
   const isOwnMessage = currentUsername && sender === currentUsername;
+
+  console.log('[ChatSendMessage]', {
+    sender,
+    currentUsername,
+    isOwnMessage,
+    payloadSender: payload.sender
+  });
 
   if (isOwnMessage) {
     // Own message - aligned right with green styling

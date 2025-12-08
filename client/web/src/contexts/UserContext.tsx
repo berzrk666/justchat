@@ -54,6 +54,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [avatarColor])
 
   const setUsername = (newDisplayName: string) => {
+    console.log('[UserContext] setUsername called with:', newDisplayName)
     setDisplayName(newDisplayName)
   }
 

@@ -1,16 +1,17 @@
-import type { ChannelJoinMessage as ChannelJoinMessageType } from '../../types/messages';
+import type { ChannelJoinMessageServerToClient } from '../../types/messages';
 
 interface ChannelJoinMessageProps {
-  message: ChannelJoinMessageType;
+  message: ChannelJoinMessageServerToClient;
 }
 
 export function ChannelJoinMessage({ message }: ChannelJoinMessageProps) {
   const { payload, timestamp } = message;
+  const username = payload.user?.username || 'Someone';
 
   return (
     <div className="flex justify-center my-3">
       <div className="bg-gray-200 text-gray-700 px-4 py-2 rounded-full text-sm">
-        <span className="font-semibold">{payload.username}</span>
+        <span className="font-semibold">{username}</span>
         {' joined the channel'}
         <span className="text-xs text-gray-500 ml-2">
           {new Date(timestamp).toLocaleTimeString()}

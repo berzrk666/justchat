@@ -22,9 +22,10 @@ interface WebSocketProviderProps {
   children: ReactNode
   username: string
   enabled?: boolean // Allow disabling WebSocket until user is ready
+  onUsernameAssigned?: (username: string) => void // Callback for server-assigned username
 }
 
-export function WebSocketProvider({ children, username, enabled = true }: WebSocketProviderProps) {
+export function WebSocketProvider({ children, username, enabled = true, onUsernameAssigned }: WebSocketProviderProps) {
   const [isConnected, setIsConnected] = useState(false)
   const [isReady, setIsReady] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
@@ -54,21 +55,49 @@ export function WebSocketProvider({ children, username, enabled = true }: WebSoc
       // Get token if available
       const token = tokenStorage.getToken()
 
-      // Send Hello message with optional token
-      const helloMessage = MessageBuilder.hello(username, token || undefined)
+      // Send Hello message with optional token (no username - server assigns it)
+      const helloMessage = MessageBuilder.hello(token || undefined)
       ws.send(JSON.stringify(helloMessage))
       console.log('Sent Hello:', helloMessage)
 
-      // Mark as ready for application to send additional messages
-      setIsReady(true)
+      // Note: Will mark as ready after receiving HELLO response from server
     }
 
     ws.onmessage = (event) => {
-      console.log('Message received:', event.data)
+      console.log('[WebSocket] Raw message received:', event.data)
       const parsedMessage = parseMessage(event.data)
+      console.log('[WebSocket] Parsed message:', parsedMessage)
 
       if (parsedMessage) {
+        // Handle HELLO response from server
+        if (parsedMessage.type === 'hello') {
+          console.log('[WebSocket] HELLO response detected')
+          const helloPayload = parsedMessage.payload as any
+          console.log('[WebSocket] HELLO payload:', helloPayload)
+
+          if (helloPayload.user?.username) {
+            console.log('[WebSocket] Server assigned username:', helloPayload.user.username)
+            console.log('[WebSocket] onUsernameAssigned callback exists?', !!onUsernameAssigned)
+
+            // Update username with server-assigned value (for guests)
+            if (onUsernameAssigned) {
+              console.log('[WebSocket] Calling onUsernameAssigned with:', helloPayload.user.username)
+              onUsernameAssigned(helloPayload.user.username)
+            } else {
+              console.warn('[WebSocket] onUsernameAssigned callback is not provided!')
+            }
+          } else {
+            console.warn('[WebSocket] HELLO payload missing user.username')
+          }
+
+          // Mark as ready after HELLO confirmation
+          setIsReady(true)
+          console.log('[WebSocket] Connection marked as ready')
+        }
+
         setMessages(prev => [...prev, parsedMessage])
+      } else {
+        console.warn('[WebSocket] Failed to parse message')
       }
     }
 

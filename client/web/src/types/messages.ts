@@ -1,11 +1,9 @@
 export const MessageType = {
   HELLO: "hello",
+  ERROR: "error",
   CHAT_SEND: "chat_send",
-  CHAT_BROADCAST: "chat_broadcast",
-  CHANNEL_JOIN_REQUEST: "channel_join_request",
   CHANNEL_JOIN: "channel_join",
   CHANNEL_LEAVE: "channel_leave",
-  ERROR: "error",
   // Future types go here
 } as const;
 
@@ -14,83 +12,85 @@ export type MessageTypeValue = typeof MessageType[keyof typeof MessageType];
 export interface BaseMessage {
   type: MessageTypeValue;
   timestamp: string;
-  correlation_id?: string;
+  id?: string; // Changed from correlation_id to id to match backend
   payload: any;
 }
 
-// Hello (client sends this on connection)
-export interface HelloPayload {
+// User information object (matches backend UserFrom)
+export interface UserFrom {
   username: string;
+}
+
+// Hello (Client → Server: send token only, no username)
+export interface HelloPayloadClientToServer {
   token?: string; // Optional JWT token for authentication
 }
 
-export interface HelloMessage extends BaseMessage {
+export interface HelloMessageClientToServer extends BaseMessage {
   type: typeof MessageType.HELLO;
-  payload: HelloPayload;
+  payload: HelloPayloadClientToServer;
 }
 
-// Client sends this (to server)
-export interface ChatSendPayload {
+// Hello (Server → Client: returns user info, especially for guests)
+export interface HelloPayloadServerToClient {
+  token?: string;
+  user?: UserFrom; // Server returns the assigned username
+}
+
+export interface HelloMessageServerToClient extends BaseMessage {
+  type: typeof MessageType.HELLO;
+  payload: HelloPayloadServerToClient;
+}
+
+// Chat Send (Client → Server)
+export interface ChatSendPayloadClientToServer {
   channel_id: number;
   content: string;
 }
 
-export interface ChatSendMessage extends BaseMessage {
+export interface ChatSendMessageClientToServer extends BaseMessage {
   type: typeof MessageType.CHAT_SEND;
-  payload: ChatSendPayload;
+  payload: ChatSendPayloadClientToServer;
 }
 
-// Server broadcasts this (back to all clients with sender info)
-export interface ChatSendBroadcastPayload {
+// Chat Send (Server → Client: broadcasts to channel with sender info)
+export interface ChatSendPayloadServerToClient {
   channel_id: number;
-  sender: string;
+  sender?: UserFrom; // User who sent the message
   content: string;
 }
 
-export interface ChatSendBroadcastMessage extends BaseMessage {
+export interface ChatSendMessageServerToClient extends BaseMessage {
   type: typeof MessageType.CHAT_SEND;
-  payload: ChatSendBroadcastPayload;
+  payload: ChatSendPayloadServerToClient;
 }
 
-// Server sends this (broadcast to room)
-export interface ChatBroadcastPayload {
-  content: string;
-  user_id?: string;
-  username?: string;
-  room_id?: string;
-}
-
-export interface ChatBroadcastMessage extends BaseMessage {
-  type: typeof MessageType.CHAT_BROADCAST;
-  payload: ChatBroadcastPayload;
-}
-
-// Channel Join Request (client sends this)
-export interface ChannelJoinRequestPayload {
-  username: string;
+// Channel Join (Client → Server)
+export interface ChannelJoinPayloadClientToServer {
   channel_id: number;
+  user?: UserFrom; // Optional user info
 }
 
-export interface ChannelJoinRequestMessage extends BaseMessage {
-  type: typeof MessageType.CHANNEL_JOIN_REQUEST;
-  payload: ChannelJoinRequestPayload;
-}
-
-// Channel Join (server broadcasts this when user joins)
-export interface ChannelJoinPayload {
-  username: string;
-  channel_id: number;
-}
-
-export interface ChannelJoinMessage extends BaseMessage {
+export interface ChannelJoinMessageClientToServer extends BaseMessage {
   type: typeof MessageType.CHANNEL_JOIN;
-  payload: ChannelJoinPayload;
+  payload: ChannelJoinPayloadClientToServer;
 }
 
-// Channel Leave (server sends this when user disconnects)
-export interface ChannelLeavePayload {
-  username: string;
+// Channel Join (Server → Client: broadcasts when user joins)
+export interface ChannelJoinPayloadServerToClient {
   channel_id: number;
+  user?: UserFrom; // User who joined
+}
+
+export interface ChannelJoinMessageServerToClient extends BaseMessage {
+  type: typeof MessageType.CHANNEL_JOIN;
+  payload: ChannelJoinPayloadServerToClient;
+}
+
+// Channel Leave (Server → Client only)
+export interface ChannelLeavePayload {
+  channel_id: number;
+  user?: UserFrom; // User who left
 }
 
 export interface ChannelLeaveMessage extends BaseMessage {
@@ -108,6 +108,10 @@ export interface ErrorMessage extends BaseMessage {
   payload: ErrorPayload;
 }
 
-// Union type - add more here as you implement them
-// Note: ChatSendBroadcastMessage is what we receive from server (has sender field)
-export type Message = ChatSendBroadcastMessage | ChatBroadcastMessage | ChannelJoinMessage | ChannelLeaveMessage | ErrorMessage;
+// Union type for messages received from server
+export type Message =
+  | HelloMessageServerToClient
+  | ChatSendMessageServerToClient
+  | ChannelJoinMessageServerToClient
+  | ChannelLeaveMessage
+  | ErrorMessage;

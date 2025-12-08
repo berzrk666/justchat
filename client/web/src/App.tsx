@@ -79,8 +79,8 @@ function App() {
       return
     }
 
-    // Send join request
-    const channelJoinMessage = MessageBuilder.channelJoin(channelId, username)
+    // Send join request (username no longer needed - server knows it)
+    const channelJoinMessage = MessageBuilder.channelJoin(channelId)
     wsSendMessage(channelJoinMessage)
 
     // Add to joined channels
@@ -255,7 +255,7 @@ function App() {
             <div className="space-y-3 max-w-4xl mx-auto">
               {filteredMessages.map((msg, index) => (
                 <MessageRenderer
-                  key={msg.correlation_id || `${msg.timestamp}-${index}`}
+                  key={msg.id || `${msg.timestamp}-${index}`}
                   message={msg}
                   currentUsername={username}
                 />
