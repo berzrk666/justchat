@@ -30,17 +30,17 @@ class ConnectionManager:
     def __init__(
         self,
         connection_registry: ConnectionRegistry,
-        channel_manager: ChannelManager,
+        # channel_manager: ChannelManager,
         auth_service: AuthenticationService,
-        membership_service: MembershipService,
-        message_broker: MessageBroker,
+        # membership_service: MembershipService,
+        # message_broker: MessageBroker,
         channel_service: ChannelService,
     ) -> None:
         self.connections = connection_registry
-        self.channels = channel_manager
+        # self.channels = channel_manager
         self.auth = auth_service
-        self.membership = membership_service
-        self.broker = message_broker
+        # self.membership = membership_service
+        # self.broker = message_broker
         self.channel_srvc = channel_service
 
     async def accept_connection(self, websocket: WebSocket) -> None:

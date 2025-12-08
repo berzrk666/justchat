@@ -76,10 +76,10 @@ channel_service = ChannelService(channel_manager, membership_service, message_br
 
 manager = ConnectionManager(
     connection_registry,
-    channel_manager,
+    # channel_manager,
     auth_service,
-    membership_service,
-    message_broker,
+    # membership_service,
+    # message_broker,
     channel_service,
 )
 
