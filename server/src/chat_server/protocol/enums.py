@@ -10,14 +10,9 @@ class MessageType(StrEnum):
     ERROR = "error"
 
     CHAT_SEND = "chat_send"  # Used when a user send a normal message
+    REACT_ADD = "chat_react_add"  # Use when a user reacts to a message
+    REACT_REMOVE = "chat_react_remove"  # Use when a user removes a react from a message
 
     # Channel
     CHANNEL_JOIN = "channel_join"
     CHANNEL_LEAVE = "channel_leave"  # used when a user leaves a channel
-
-    # User
-    USER_ONLINE = "user_online"  # State user is online
-    USER_AFK = "user_afk"  # User is AFK
-    USER_OFFLINE = "user_offline"  # State user is offlline
-    USER_TYPING_START = "typing_start"  # User started typing
-    USER_TYPING_STOP = "typing_stop"  # User stopped typing

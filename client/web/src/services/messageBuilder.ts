@@ -3,6 +3,8 @@ import type {
   HelloMessageClientToServer,
   ChatSendMessageClientToServer,
   ChannelJoinMessageClientToServer,
+  ReactAddMessageClientToServer,
+  ReactRemoveMessageClientToServer,
 } from '../types/messages';
 
 export class MessageBuilder {
@@ -52,6 +54,39 @@ export class MessageBuilder {
     };
   }
 
+  /**
+   * Build REACT_ADD message (Client → Server).
+   * Add a reaction to a message.
+   */
+  static reactAdd(channelId: number, messageId: string, emote: string): ReactAddMessageClientToServer {
+    return {
+      type: MessageType.REACT_ADD,
+      timestamp: new Date().toISOString(),
+      id: crypto.randomUUID(),
+      payload: {
+        channel_id: channelId,
+        message_id: messageId,
+        emote: emote,
+      },
+    };
+  }
+
+  /**
+   * Build REACT_REMOVE message (Client → Server).
+   * Remove a reaction from a message.
+   */
+  static reactRemove(channelId: number, messageId: string, emote: string): ReactRemoveMessageClientToServer {
+    return {
+      type: MessageType.REACT_REMOVE,
+      timestamp: new Date().toISOString(),
+      id: crypto.randomUUID(),
+      payload: {
+        channel_id: channelId,
+        message_id: messageId,
+        emote: emote,
+      },
+    };
+  }
+
   // Note: channelLeave is not needed - server automatically handles disconnections
-  // Future: Add more builder methods here
 }

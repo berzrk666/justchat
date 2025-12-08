@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import UUID4, BaseModel, ConfigDict
 
 from chat_server.protocol.basemessage import BaseMessage
 from chat_server.protocol.enums import MessageType
@@ -78,3 +78,24 @@ class ChatSendPayload(BaseModel):
 class ChatSend(BaseMessage):
     type: Literal[MessageType.CHAT_SEND] = MessageType.CHAT_SEND
     payload: ChatSendPayload
+
+
+# Reacts
+class ReactPayload(BaseModel):
+    model_config = {"extra": "forbid"}
+    # TODO: Limit the possible values for an emote
+    emote: str
+    message_id: UUID4
+    channel_id: int
+
+
+@register_message(MessageType.REACT_ADD)
+class ReactAdd(BaseMessage):
+    type: Literal[MessageType.REACT_ADD] = MessageType.REACT_ADD
+    payload: ReactPayload
+
+
+@register_message(MessageType.REACT_REMOVE)
+class ReactRemove(BaseMessage):
+    type: Literal[MessageType.REACT_REMOVE] = MessageType.REACT_REMOVE
+    payload: ReactPayload

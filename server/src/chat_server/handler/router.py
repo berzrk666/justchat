@@ -10,6 +10,8 @@ from chat_server.protocol.enums import MessageType
 HANDLERS = {
     MessageType.CHAT_SEND: chat_handler.handler_chat_send,
     MessageType.CHANNEL_JOIN: channel_handler.handler_channel_join,
+    MessageType.REACT_ADD: chat_handler.handler_chat_react,
+    MessageType.REACT_REMOVE: chat_handler.handler_chat_react,
 }
 
 

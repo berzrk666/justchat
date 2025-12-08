@@ -2,6 +2,8 @@ export const MessageType = {
   HELLO: "hello",
   ERROR: "error",
   CHAT_SEND: "chat_send",
+  REACT_ADD: "chat_react_add",
+  REACT_REMOVE: "chat_react_remove",
   CHANNEL_JOIN: "channel_join",
   CHANNEL_LEAVE: "channel_leave",
   // Future types go here
@@ -108,10 +110,46 @@ export interface ErrorMessage extends BaseMessage {
   payload: ErrorPayload;
 }
 
+// Reactions (Client → Server)
+export interface ReactPayloadClientToServer {
+  emote: string; // Emoji string
+  message_id: string; // UUID of the message being reacted to
+  channel_id: number;
+}
+
+export interface ReactAddMessageClientToServer extends BaseMessage {
+  type: typeof MessageType.REACT_ADD;
+  payload: ReactPayloadClientToServer;
+}
+
+export interface ReactRemoveMessageClientToServer extends BaseMessage {
+  type: typeof MessageType.REACT_REMOVE;
+  payload: ReactPayloadClientToServer;
+}
+
+// Reactions (Server → Client: broadcasts to channel)
+export interface ReactPayloadServerToClient {
+  emote: string;
+  message_id: string;
+  channel_id: number;
+}
+
+export interface ReactAddMessageServerToClient extends BaseMessage {
+  type: typeof MessageType.REACT_ADD;
+  payload: ReactPayloadServerToClient;
+}
+
+export interface ReactRemoveMessageServerToClient extends BaseMessage {
+  type: typeof MessageType.REACT_REMOVE;
+  payload: ReactPayloadServerToClient;
+}
+
 // Union type for messages received from server
 export type Message =
   | HelloMessageServerToClient
   | ChatSendMessageServerToClient
   | ChannelJoinMessageServerToClient
   | ChannelLeaveMessage
-  | ErrorMessage;
+  | ErrorMessage
+  | ReactAddMessageServerToClient
+  | ReactRemoveMessageServerToClient;

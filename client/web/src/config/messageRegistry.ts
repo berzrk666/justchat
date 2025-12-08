@@ -15,6 +15,14 @@ export function initializeMessageHandlers() {
   registerParser(MessageType.CHAT_SEND, (data) => data as any);
   registerRenderer(MessageType.CHAT_SEND, ChatSendMessageComponent);
 
+  // REACT_ADD (server broadcasts when someone adds a reaction)
+  registerParser(MessageType.REACT_ADD, (data) => data as any);
+  // No renderer needed - reactions are handled by the ChatSendMessage component
+
+  // REACT_REMOVE (server broadcasts when someone removes a reaction)
+  registerParser(MessageType.REACT_REMOVE, (data) => data as any);
+  // No renderer needed - reactions are handled by the ChatSendMessage component
+
   // CHANNEL_JOIN (server broadcasts when someone joins)
   registerParser(MessageType.CHANNEL_JOIN, (data) => data as any);
   registerRenderer(MessageType.CHANNEL_JOIN, ChannelJoinMessage);

@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { UserProvider, useUser } from './contexts/UserContext'
 import { WebSocketProvider } from './contexts/WebSocketContext'
+import { ReactionsProvider } from './contexts/ReactionsContext'
 
 function AppWithWebSocket() {
   const { username, setUsername } = useUser()
@@ -13,7 +14,9 @@ function AppWithWebSocket() {
       username={username}
       onUsernameAssigned={setUsername}
     >
-      <App />
+      <ReactionsProvider>
+        <App />
+      </ReactionsProvider>
     </WebSocketProvider>
   )
 }

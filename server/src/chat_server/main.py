@@ -17,7 +17,7 @@ from chat_server.settings import get_settings
 import logging
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="{asctime}  |  {levelname}  |  {filename}::{funcName}  |  {message}",
     style="{",
     datefmt="%d-%m-%Y %H:%M",
@@ -90,6 +90,7 @@ async def websocket_endpoint(websocket: WebSocket):
         await manager.accept_connection(websocket)
     except WebSocketDisconnect:
         logging.info("Connection closed by the server: Invalid HELLO initiaition")
+        return
 
     try:
         while True:
