@@ -15,26 +15,36 @@ from chat_server.services.message_broker import MessageBroker
 from chat_server.settings import get_settings
 
 import logging
+import sys
 
+# Configure logging to work with uvicorn
 logging.basicConfig(
     level=logging.DEBUG,
     format="{asctime}  |  {levelname}  |  {filename}::{funcName}  |  {message}",
     style="{",
     datefmt="%d-%m-%Y %H:%M",
+    handlers=[logging.StreamHandler(sys.stdout)],
+    force=True,  # Override any existing configuration
 )
+
+# Get logger for this module
+logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
+# API Routes
 api_router = APIRouter()
 api_router.include_router(auth.router)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logging.debug("Initializing Database.")
+    logger.info("Initializing Database...")
     await init_db()
+
     yield
-    logging.info("Program Exit.")
+
+    logger.info("Program Exit.")
 
 
 # Create FastAPI app with settings

@@ -1,10 +1,10 @@
 import logging
 from fastapi import WebSocket
-from chat_server.connection.channel import Channel
 from chat_server.connection.user import User
 from chat_server.infrastructure.connection_registry import ConnectionRegistry
 from chat_server.protocol.basemessage import BaseMessage
-from chat_server.services.membership_service import MembershipService
+
+logger = logging.getLogger(__name__)
 
 
 class MessageBroker:

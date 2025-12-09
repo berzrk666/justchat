@@ -29,7 +29,6 @@ async def handler_chat_send(
     try:
         msg_in = ChatSend.model_validate(message)
     except ValidationError:
-        # FIX: I think this code never happens
         await manager.send_error(ctx.websocket, "Malformed message")
         return
 
@@ -84,11 +83,12 @@ async def handler_chat_react(
     try:
         msg_in = ReactAdd.model_validate(message)
     except ValidationError:
+        # FIX: I think this code never happens
         try:
             msg_in = ReactRemove.model_validate(message)
         except ValidationError:
             await manager.send_error(ctx.websocket, "Malformed message")
-            return
+        return
 
     channel = manager.channel_srvc.get_channel_by_id(msg_in.payload.channel_id)
 
