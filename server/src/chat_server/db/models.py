@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.types import DateTime, Integer, String
@@ -28,10 +29,11 @@ class ChannelTable(Base):
 class MessageTable(Base):
     __tablename__ = "messages"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True)
     channel_id: Mapped[int] = mapped_column(Integer)
     sender_id: Mapped[int | None] = mapped_column(ForeignKey("user.id"))
     sender_username: Mapped[str] = mapped_column(
         String(USERNAME_MAX_LENGTH), nullable=False
     )
     timestamp: Mapped[datetime] = mapped_column(DateTime)
+    content: Mapped[str] = mapped_column(String)

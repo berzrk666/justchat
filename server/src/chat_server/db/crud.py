@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import select
+from sqlalchemy.sql import select, selectable
 
 from chat_server.api.models import UserCreate
 from chat_server.db.models import MessageTable, UserTable
@@ -62,10 +62,12 @@ async def create_message(
     timestamp = message.timestamp
 
     message_db = MessageTable(
+        id=message.id,
         channel_id=channel_id,
         sender_id=sender_id,
         sender_username=sender_username,
         timestamp=timestamp,
+        content=message.payload.content,
     )
 
     try:
@@ -77,3 +79,15 @@ async def create_message(
         await session.rollback()
         logging.error(f"Failed to create message in database: {e}")
         raise e
+
+
+async def get_channel_messages(
+    session: AsyncSession, channel_id: int
+) -> list[MessageTable] | None:
+    """
+    Retrive all messages stored from a channel.
+    """
+    # TODO: Paginate this
+    stmt = select(MessageTable).where(MessageTable.channel_id == channel_id)
+    res = await session.execute(stmt)
+    return list(res.scalars().all())
