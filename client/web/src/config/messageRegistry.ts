@@ -39,5 +39,9 @@ export function initializeMessageHandlers() {
   registerParser(MessageType.CHANNEL_MEMBERS, (data) => data as any);
   // No renderer needed - handled directly in App state
 
+  // TYPING_START (server broadcasts when someone starts typing)
+  registerParser(MessageType.TYPING_START, (data) => data as any);
+  // No renderer needed - handled directly in App state as typing indicator
+
   // Future types registered here
 }

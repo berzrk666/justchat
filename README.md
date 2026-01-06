@@ -20,7 +20,7 @@
   - [ ] Use *bit fields* instead of `StrEnum` for the `MessageType`
   - [ ] Smaller fields, e.g. `user` -> `u`
 - [ ] Add **pagination** for the message history
-- [ ] Add typing indicator
+- [X] Add typing indicator
 - [ ] Add **slash commands**
   - [ ] Kick user
   - [ ] Mute user
@@ -34,12 +34,15 @@ The communication is done entirely in WebSockets.
 
 I focused in making easy and modular when implementing new protocols.
 
-First create a `MessageType` enum that will be used to identify this protocol.
+All you need is:
 
-Create a `handler` for your protocol inside `server/handler/` that will contain
+1. Create a `MessageType` enum in `server/protocol/enums.py`  that will be used
+to identify this protocol.
+2. Create the **Payload Body** in `server/protocol/messages.py` that will
+contain all the data that is needed.
+3. Create a `handler` for your protocol inside `server/handler/` that will contain
 your **implementation** of the protocol.
-
-And **register** this `handler` to a `MessageType` inside `server/handler/routes.py`
+4. And **register** this `handler` to a `MessageType` inside `server/handler/routes.py`
 
 After this the server will send every request of this new `MessageType`
 to the specified `handler`.

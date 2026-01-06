@@ -112,3 +112,16 @@ class ChannelMembersPayload(BaseModel):
 class ChannelMembers(BaseMessage):
     type: Literal[MessageType.CHANNEL_MEMBERS] = MessageType.CHANNEL_MEMBERS
     payload: ChannelMembersPayload
+
+
+# Typing Start
+class TypingStartPayload(BaseModel):
+    model_config = {"extra": "forbid"}
+    channel_id: int
+    user: UserFrom | None = None  # Ignored by the server if the client send this.
+
+
+@register_message(MessageType.TYPING_START)
+class TypingStart(BaseMessage):
+    type: Literal[MessageType.TYPING_START] = MessageType.TYPING_START
+    payload: TypingStartPayload

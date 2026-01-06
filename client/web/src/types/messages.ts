@@ -4,6 +4,7 @@ export const MessageType = {
   CHAT_SEND: "chat_send",
   REACT_ADD: "chat_react_add",
   REACT_REMOVE: "chat_react_remove",
+  TYPING_START: "chat_typing",
   CHANNEL_JOIN: "channel_join",
   CHANNEL_LEAVE: "channel_leave",
   CHANNEL_MEMBERS: "channel_members",
@@ -156,6 +157,27 @@ export interface ChannelMembersMessage extends BaseMessage {
   payload: ChannelMembersPayload;
 }
 
+// Typing Start (Client → Server)
+export interface TypingStartPayloadClientToServer {
+  channel_id: number;
+}
+
+export interface TypingStartMessageClientToServer extends BaseMessage {
+  type: typeof MessageType.TYPING_START;
+  payload: TypingStartPayloadClientToServer;
+}
+
+// Typing Start (Server → Client: broadcasts when user starts typing)
+export interface TypingStartPayloadServerToClient {
+  channel_id: number;
+  user?: UserFrom; // User who is typing
+}
+
+export interface TypingStartMessageServerToClient extends BaseMessage {
+  type: typeof MessageType.TYPING_START;
+  payload: TypingStartPayloadServerToClient;
+}
+
 // Union type for messages received from server
 export type Message =
   | HelloMessageServerToClient
@@ -165,4 +187,5 @@ export type Message =
   | ErrorMessage
   | ReactAddMessageServerToClient
   | ReactRemoveMessageServerToClient
-  | ChannelMembersMessage;
+  | ChannelMembersMessage
+  | TypingStartMessageServerToClient;

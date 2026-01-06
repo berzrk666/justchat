@@ -12,6 +12,7 @@ HANDLERS = {
     MessageType.CHANNEL_JOIN: channel_handler.handler_channel_join,
     MessageType.REACT_ADD: chat_handler.handler_chat_react,
     MessageType.REACT_REMOVE: chat_handler.handler_chat_react,
+    MessageType.TYPING_START: chat_handler.handler_chat_typing,
 }
 
 
@@ -29,7 +30,7 @@ async def dispatch(
 
     if handler is None:
         # TODO: Return a message error or some exception. It will never happen
-        # here since there are a verification done in manager.handle_message()
+        # here since there is a verification check in manager.handle_message()
         logging.debug(f"Unknown Message Type: {message.type}. Payload: {message}")
         return
 

@@ -5,6 +5,7 @@ import type {
   ChannelJoinMessageClientToServer,
   ReactAddMessageClientToServer,
   ReactRemoveMessageClientToServer,
+  TypingStartMessageClientToServer,
 } from '../types/messages';
 
 export class MessageBuilder {
@@ -84,6 +85,21 @@ export class MessageBuilder {
         channel_id: channelId,
         message_id: messageId,
         emote: emote,
+      },
+    };
+  }
+
+  /**
+   * Build TYPING_START message (Client → Server).
+   * Notify server that user started typing in a channel.
+   */
+  static typingStart(channelId: number): TypingStartMessageClientToServer {
+    return {
+      type: MessageType.TYPING_START,
+      timestamp: new Date().toISOString(),
+      id: crypto.randomUUID(),
+      payload: {
+        channel_id: channelId,
       },
     };
   }

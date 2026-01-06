@@ -15,6 +15,8 @@ from chat_server.protocol.messages import (
     ReactAdd,
     ReactPayload,
     ReactRemove,
+    TypingStart,
+    TypingStartPayload,
     UserFrom,
 )
 from chat_server.protocol.basemessage import BaseMessage
@@ -120,6 +122,46 @@ async def handler_chat_react(
         response = ReactRemove(
             timestamp=datetime.now(), id=uuid.uuid4(), payload=payload
         )
+
+    # Validate if user is a member of the channel
+    if not manager.channel_srvc.is_member(ctx.user, channel):
+        logging.warning(
+            f"{repr(ctx.user)} tried to send a reaction to channel {repr(channel)} without being a member."
+        )
+        await manager.send_error(
+            ctx.websocket,
+            "You must join this channel before reacting messages",
+        )
+        return
+    await manager.channel_srvc.send_to_channel(channel, response)
+
+
+async def handler_chat_typing(
+    ctx: ConnectionContext, message: BaseMessage, manager: ConnectionManager
+):
+    """
+    Handles typing start message
+    """
+    try:
+        msg_in = TypingStart.model_validate(message)
+    except ValidationError:
+        await manager.send_error(ctx.websocket, "Malformed message")
+        return
+
+    logging.debug(f"{msg_in = }")
+    channel = manager.channel_srvc.get_channel_by_id(msg_in.payload.channel_id)
+
+    if channel is None:
+        await manager.send_error(ctx.websocket, "Channel does not exist.")
+        logging.error(
+            f"{repr(ctx.user)} attempted to send a message to a channel that does not exist: {msg_in.payload.channel_id}"
+        )
+        return
+
+    response_payload = TypingStartPayload(channel_id=channel.id, user=ctx.user)
+    response = TypingStart(
+        timestamp=datetime.now(), id=uuid.uuid4(), payload=response_payload
+    )
 
     # Validate if user is a member of the channel
     if not manager.channel_srvc.is_member(ctx.user, channel):
