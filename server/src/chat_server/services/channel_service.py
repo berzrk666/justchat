@@ -92,6 +92,18 @@ class ChannelService:
         """
         return self._channelmanager.get(channel_id)
 
+    def find_member_by_username(self, channel_id: int, username: str) -> User | None:
+        """
+        Find an User from a channel.
+        """
+        channel = self.get_channel_by_id(channel_id)
+        if channel:
+            # PERF: O(n) search
+            for user in self._membershipsrvc.get_channel_members(channel):
+                if user.username == username:
+                    return user
+        return None
+
     def is_member(self, user: User, channel: Channel) -> bool:
         """
         Check if User is member of a Channel.
