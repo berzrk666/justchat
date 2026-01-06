@@ -17,10 +17,16 @@ const ReactionsContext = createContext<ReactionsContextType | undefined>(undefin
 export function ReactionsProvider({ children }: { children: ReactNode }) {
   const [reactions, setReactions] = useState<ReactionsMap>(new Map())
   const { messages } = useWebSocket()
+  const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set())
 
   // Listen for reaction messages and update state
   useEffect(() => {
     messages.forEach((msg: Message) => {
+      // Skip if we've already processed this message
+      if (processedMessageIds.has(msg.id)) {
+        return
+      }
+
       if (msg.type === 'chat_react_add') {
         const { message_id, emote } = msg.payload
         setReactions(prev => {
@@ -30,6 +36,7 @@ export function ReactionsProvider({ children }: { children: ReactNode }) {
           newMap.set(message_id, msgReactions)
           return newMap
         })
+        setProcessedMessageIds(prev => new Set(prev).add(msg.id))
       } else if (msg.type === 'chat_react_remove') {
         const { message_id, emote } = msg.payload
         setReactions(prev => {
@@ -50,9 +57,10 @@ export function ReactionsProvider({ children }: { children: ReactNode }) {
           }
           return newMap
         })
+        setProcessedMessageIds(prev => new Set(prev).add(msg.id))
       }
     })
-  }, [messages])
+  }, [messages, processedMessageIds])
 
   const addReaction = (messageId: string, emote: string) => {
     setReactions(prev => {
