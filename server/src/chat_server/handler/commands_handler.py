@@ -1,11 +1,13 @@
+from datetime import datetime
 import logging
+from uuid import uuid4
 
 from pydantic import ValidationError
 
 from chat_server.connection.context import ConnectionContext
 from chat_server.connection.manager import ConnectionManager
 from chat_server.protocol.basemessage import BaseMessage
-from chat_server.protocol.messages import KickCommand
+from chat_server.protocol.messages import KickCommand, KickCommandPayload
 
 
 async def handler_kick(
@@ -38,17 +40,22 @@ async def handler_kick(
             return
 
         # TODO: Check permission
-        
-        target = manager.channel_srvc.find_member_by_username(msg_in.payload.channel_id, msg_in.payload.target)
+
+        target = manager.channel_srvc.find_member_by_username(
+            msg_in.payload.channel_id, msg_in.payload.target
+        )
 
         if target:
+            payload = msg_in.payload
+            kick_msg = KickCommand(
+                timestamp=datetime.now(), id=uuid4(), payload=payload
+            )
+            await manager.channel_srvc.send_to_channel(channel, kick_msg)
             await manager.channel_srvc.leave_channel(target, channel)
-
     except ValidationError:
         await manager.send_error(ctx.websocket, "Malformed message")
     except Exception as e:
         logging.error(f"Error handling CHAT_SEND: {e}")
-     
 
 
 async def handler_mute(
@@ -58,12 +65,3 @@ async def handler_mute(
     Handle mute command
     """
     pass
-
-
-async def handler_commands(
-    ctx: ConnectionContext, message: BaseMessage, manager: ConnectionManager
-) -> None:
-    """
-    Handle chat commands AKA `slash commands`
-    """
-       await manager.send_error(ctx.websocket, "Failed to send command")

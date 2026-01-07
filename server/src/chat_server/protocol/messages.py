@@ -134,9 +134,10 @@ class KickCommandPayload(BaseModel):
     model_config = {"extra": "forbid"}
     channel_id: int
     target: str
-    reason: str | None
+    reason: str = ""
 
 
+@register_message(MessageType.CHAT_KICK)
 class KickCommand(BaseMessage):
     type: Literal[MessageType.CHAT_KICK] = MessageType.CHAT_KICK
     payload: KickCommandPayload
