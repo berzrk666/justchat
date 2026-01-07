@@ -3,6 +3,7 @@ from functools import wraps
 from typing import Type
 
 from pydantic import ValidationError
+
 from chat_server.protocol.basemessage import BaseMessage
 
 
@@ -52,6 +53,10 @@ def require_channel(handler):
 
 
 def require_membership(handler):
+    """
+    Check if the user is in the channel
+    """
+
     @wraps(handler)
     async def wrapper(ctx, message, manager, *, msg_in, channel, **kwargs):
         if not manager.channel_srvc.is_member(ctx.user, channel):

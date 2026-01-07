@@ -1,17 +1,18 @@
-from datetime import datetime
 import logging
 import uuid
+from datetime import datetime
 
 from chat_server.connection.channel import Channel
-from chat_server.db.db import async_session
 from chat_server.connection.context import ConnectionContext
 from chat_server.connection.manager import ConnectionManager
 from chat_server.db import crud
+from chat_server.db.db import async_session
 from chat_server.handler.decorators import (
     require_channel,
     require_membership,
     validate_message,
 )
+from chat_server.protocol.basemessage import BaseMessage
 from chat_server.protocol.enums import MessageType
 from chat_server.protocol.messages import (
     ChatSend,
@@ -23,9 +24,6 @@ from chat_server.protocol.messages import (
     TypingStartPayload,
     UserFrom,
 )
-from chat_server.protocol.basemessage import BaseMessage
-
-# TODO: Too many code duplicated here
 
 
 @validate_message(ChatSend)
