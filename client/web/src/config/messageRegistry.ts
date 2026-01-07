@@ -5,6 +5,7 @@ import { ChatSendMessageComponent } from '../components/messages/ChatSendMessage
 import { ChannelJoinMessage } from '../components/messages/ChannelJoinMessage';
 import { ChannelLeaveMessage } from '../components/messages/ChannelLeaveMessage';
 import { ErrorMessage } from '../components/messages/ErrorMessage';
+import { KickMessage } from '../components/messages/KickMessage';
 
 // All message type registrations in one place
 export function initializeMessageHandlers() {
@@ -42,6 +43,10 @@ export function initializeMessageHandlers() {
   // TYPING_START (server broadcasts when someone starts typing)
   registerParser(MessageType.TYPING_START, (data) => data as any);
   // No renderer needed - handled directly in App state as typing indicator
+
+  // CHAT_KICK (server broadcasts when someone is kicked)
+  registerParser(MessageType.CHAT_KICK, (data) => data as any);
+  registerRenderer(MessageType.CHAT_KICK, KickMessage);
 
   // Future types registered here
 }

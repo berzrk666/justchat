@@ -5,6 +5,7 @@ export const MessageType = {
   REACT_ADD: "chat_react_add",
   REACT_REMOVE: "chat_react_remove",
   TYPING_START: "chat_typing",
+  CHAT_KICK: "chat_kick",
   CHANNEL_JOIN: "channel_join",
   CHANNEL_LEAVE: "channel_leave",
   CHANNEL_MEMBERS: "channel_members",
@@ -178,6 +179,30 @@ export interface TypingStartMessageServerToClient extends BaseMessage {
   payload: TypingStartPayloadServerToClient;
 }
 
+// Chat Kick Command (Client → Server)
+export interface ChatKickPayloadClientToServer {
+  channel_id: number;
+  target: string; // Username to kick
+  reason?: string; // Optional reason
+}
+
+export interface ChatKickMessageClientToServer extends BaseMessage {
+  type: typeof MessageType.CHAT_KICK;
+  payload: ChatKickPayloadClientToServer;
+}
+
+// Chat Kick (Server → Client: broadcasts when user is kicked)
+export interface ChatKickPayloadServerToClient {
+  channel_id: number;
+  target: string; // Username who was kicked
+  reason?: string; // Optional reason
+}
+
+export interface ChatKickMessageServerToClient extends BaseMessage {
+  type: typeof MessageType.CHAT_KICK;
+  payload: ChatKickPayloadServerToClient;
+}
+
 // Union type for messages received from server
 export type Message =
   | HelloMessageServerToClient
@@ -188,4 +213,5 @@ export type Message =
   | ReactAddMessageServerToClient
   | ReactRemoveMessageServerToClient
   | ChannelMembersMessage
-  | TypingStartMessageServerToClient;
+  | TypingStartMessageServerToClient
+  | ChatKickMessageServerToClient;

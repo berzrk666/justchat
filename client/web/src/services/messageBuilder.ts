@@ -6,6 +6,7 @@ import type {
   ReactAddMessageClientToServer,
   ReactRemoveMessageClientToServer,
   TypingStartMessageClientToServer,
+  ChatKickMessageClientToServer,
 } from '../types/messages';
 
 export class MessageBuilder {
@@ -100,6 +101,23 @@ export class MessageBuilder {
       id: crypto.randomUUID(),
       payload: {
         channel_id: channelId,
+      },
+    };
+  }
+
+  /**
+   * Build CHAT_KICK message (Client → Server).
+   * Kick a user from a channel.
+   */
+  static chatKick(channelId: number, target: string, reason?: string): ChatKickMessageClientToServer {
+    return {
+      type: MessageType.CHAT_KICK,
+      timestamp: new Date().toISOString(),
+      id: crypto.randomUUID(),
+      payload: {
+        channel_id: channelId,
+        target: target,
+        ...(reason && { reason }), // Include reason only if provided
       },
     };
   }

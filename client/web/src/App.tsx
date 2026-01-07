@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type FormEvent } from 'react'
+import { useState, useEffect, useRef, type FormEvent, type KeyboardEvent } from 'react'
 import './App.css'
 import { initializeMessageHandlers } from './config/messageRegistry'
 import { MessageRenderer } from './components/messages/MessageRenderer'
@@ -6,9 +6,11 @@ import { MessageBuilder } from './services/messageBuilder'
 import { Sidebar } from './components/Sidebar'
 import { MembersList } from './components/MembersList'
 import { LoginModal } from './components/LoginModal'
+import { CommandAutocomplete } from './components/CommandAutocomplete'
 import { useUser } from './contexts/UserContext'
 import { useWebSocket } from './contexts/WebSocketContext'
 import type { Message } from './types/messages'
+import { filterCommands, parseCommand, type Command } from './config/commandRegistry'
 
 interface Channel {
   id: number
@@ -42,6 +44,12 @@ function App() {
   const [typingUsers, setTypingUsers] = useState<Map<number, Map<string, number>>>(new Map())
   const typingTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
   const lastTypingSentRef = useRef<Map<number, number>>(new Map()) // Track when we last sent TYPING_START per channel
+
+  // Command autocomplete state
+  const [showCommandAutocomplete, setShowCommandAutocomplete] = useState(false)
+  const [filteredCommands, setFilteredCommands] = useState<Command[]>([])
+  const [selectedCommandIndex, setSelectedCommandIndex] = useState(0)
+  const messageInputRef = useRef<HTMLInputElement>(null)
 
   // Initialize message handlers on mount
   useEffect(() => {
@@ -242,6 +250,10 @@ function App() {
         if ((msg.type === 'channel_join' || msg.type === 'channel_leave') && 'channel_id' in msg.payload) {
           return msg.payload.channel_id === currentChannelId
         }
+        // Show kick messages for current channel
+        if (msg.type === 'chat_kick' && 'channel_id' in msg.payload) {
+          return msg.payload.channel_id === currentChannelId
+        }
         // Show errors in current channel
         if (msg.type === 'error') {
           return true
@@ -294,26 +306,79 @@ function App() {
   function handleMessageChange(newMessage: string) {
     setMessage(newMessage)
 
-    // Send TYPING_START if we have a channel and we're typing
-    if (currentChannelId !== null && newMessage.length > 0 && isConnected) {
-      const now = Date.now()
-      const lastSent = lastTypingSentRef.current.get(currentChannelId) || 0
-
-      console.log('[App] handleMessageChange:', {
-        currentChannelId,
-        messageLength: newMessage.length,
-        isConnected,
-        timeSinceLastSent: now - lastSent
-      })
-
-      // Only send TYPING_START if we haven't sent one in the last 8 seconds
-      // This ensures we send it when starting to type, and re-send if still typing after 8 seconds
-      if (now - lastSent > 8000) {
-        const typingMessage = MessageBuilder.typingStart(currentChannelId)
-        console.log('[App] Sending TYPING_START:', typingMessage)
-        wsSendMessage(typingMessage)
-        lastTypingSentRef.current.set(currentChannelId, now)
+    // Check if this is a command (starts with "/")
+    if (newMessage.startsWith('/')) {
+      const parsed = parseCommand(newMessage)
+      if (parsed) {
+        // Filter commands based on what's been typed
+        const matches = filterCommands(parsed.command)
+        setFilteredCommands(matches)
+        setShowCommandAutocomplete(matches.length > 0)
+        setSelectedCommandIndex(0)
+      } else if (newMessage === '/') {
+        // Show all commands when just "/" is typed
+        setFilteredCommands(filterCommands(''))
+        setShowCommandAutocomplete(true)
+        setSelectedCommandIndex(0)
+      } else {
+        setShowCommandAutocomplete(false)
       }
+    } else {
+      // Hide autocomplete if not a command
+      setShowCommandAutocomplete(false)
+
+      // Send TYPING_START if we have a channel and we're typing
+      if (currentChannelId !== null && newMessage.length > 0 && isConnected) {
+        const now = Date.now()
+        const lastSent = lastTypingSentRef.current.get(currentChannelId) || 0
+
+        console.log('[App] handleMessageChange:', {
+          currentChannelId,
+          messageLength: newMessage.length,
+          isConnected,
+          timeSinceLastSent: now - lastSent
+        })
+
+        // Only send TYPING_START if we haven't sent one in the last 8 seconds
+        // This ensures we send it when starting to type, and re-send if still typing after 8 seconds
+        if (now - lastSent > 8000) {
+          const typingMessage = MessageBuilder.typingStart(currentChannelId)
+          console.log('[App] Sending TYPING_START:', typingMessage)
+          wsSendMessage(typingMessage)
+          lastTypingSentRef.current.set(currentChannelId, now)
+        }
+      }
+    }
+  }
+
+  function handleCommandSelect(command: Command) {
+    // Insert command format into input
+    const commandText = `/${command.name} `
+    setMessage(commandText)
+    setShowCommandAutocomplete(false)
+    messageInputRef.current?.focus()
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (!showCommandAutocomplete) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedCommandIndex(prev =>
+        prev < filteredCommands.length - 1 ? prev + 1 : prev
+      )
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedCommandIndex(prev => (prev > 0 ? prev - 1 : 0))
+    } else if (e.key === 'Tab' || (e.key === 'Enter' && filteredCommands.length > 0)) {
+      e.preventDefault()
+      const selected = filteredCommands[selectedCommandIndex]
+      if (selected) {
+        handleCommandSelect(selected)
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      setShowCommandAutocomplete(false)
     }
   }
 
@@ -325,13 +390,43 @@ function App() {
       return
     }
 
-    if (message.trim() && isConnected) {
+    if (!message.trim() || !isConnected) {
+      return
+    }
+
+    // Check if this is a command
+    if (message.startsWith('/')) {
+      const parsed = parseCommand(message)
+      if (!parsed) {
+        alert('Invalid command format')
+        return
+      }
+
+      // Handle different commands
+      if (parsed.command === 'kick') {
+        if (parsed.args.length < 1) {
+          alert('Usage: /kick <target> [reason]')
+          return
+        }
+        const target = parsed.args[0]
+        const reason = parsed.args.slice(1).join(' ') || undefined
+        const kickMessage = MessageBuilder.chatKick(currentChannelId, target, reason)
+        wsSendMessage(kickMessage)
+        setMessage('')
+      } else {
+        alert(`Unknown command: ${parsed.command}`)
+      }
+    } else {
+      // Regular chat message
       const chatMessage = MessageBuilder.chatSend(currentChannelId, message)
       wsSendMessage(chatMessage)
       setMessage('')
       // Reset typing indicator tracking when sending
       lastTypingSentRef.current.delete(currentChannelId)
     }
+
+    // Hide autocomplete after sending
+    setShowCommandAutocomplete(false)
   }
 
   function handleLoginSuccess(loggedInUsername: string) {
@@ -519,11 +614,22 @@ function App() {
 
         {/* Message Form */}
         <div className="bg-white border-t border-gray-200 p-4">
-          <form onSubmit={sendMessage} className="flex gap-2 max-w-4xl mx-auto">
+          <form onSubmit={sendMessage} className="relative flex gap-2 max-w-4xl mx-auto">
+            {/* Command Autocomplete */}
+            {showCommandAutocomplete && (
+              <CommandAutocomplete
+                commands={filteredCommands}
+                selectedIndex={selectedCommandIndex}
+                onSelect={handleCommandSelect}
+              />
+            )}
+
             <input
+              ref={messageInputRef}
               type="text"
               value={message}
               onChange={(e) => handleMessageChange(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder={
                 currentChannelId !== null
                   ? `Message #${channels.find(c => c.id === currentChannelId)?.name || `Channel ${currentChannelId}`}`
@@ -531,6 +637,7 @@ function App() {
               }
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               disabled={!isConnected || currentChannelId === null}
+              autoComplete="off"
             />
             <button
               type="submit"
