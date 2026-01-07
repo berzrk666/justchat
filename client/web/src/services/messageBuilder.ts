@@ -3,6 +3,7 @@ import type {
   HelloMessageClientToServer,
   ChatSendMessageClientToServer,
   ChannelJoinMessageClientToServer,
+  ChannelLeaveMessageClientToServer,
   ReactAddMessageClientToServer,
   ReactRemoveMessageClientToServer,
   TypingStartMessageClientToServer,
@@ -122,5 +123,18 @@ export class MessageBuilder {
     };
   }
 
-  // Note: channelLeave is not needed - server automatically handles disconnections
+  /**
+   * Build CHANNEL_LEAVE message (Client → Server).
+   * Leave a channel.
+   */
+  static channelLeave(channelId: number): ChannelLeaveMessageClientToServer {
+    return {
+      type: MessageType.CHANNEL_LEAVE,
+      timestamp: new Date().toISOString(),
+      id: crypto.randomUUID(),
+      payload: {
+        channel_id: channelId,
+      },
+    };
+  }
 }

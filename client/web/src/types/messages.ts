@@ -92,15 +92,25 @@ export interface ChannelJoinMessageServerToClient extends BaseMessage {
   payload: ChannelJoinPayloadServerToClient;
 }
 
-// Channel Leave (Server → Client only)
-export interface ChannelLeavePayload {
+// Channel Leave (Client → Server)
+export interface ChannelLeavePayloadClientToServer {
+  channel_id: number;
+}
+
+export interface ChannelLeaveMessageClientToServer extends BaseMessage {
+  type: typeof MessageType.CHANNEL_LEAVE;
+  payload: ChannelLeavePayloadClientToServer;
+}
+
+// Channel Leave (Server → Client: broadcasts when user leaves)
+export interface ChannelLeavePayloadServerToClient {
   channel_id: number;
   user?: UserFrom; // User who left
 }
 
-export interface ChannelLeaveMessage extends BaseMessage {
+export interface ChannelLeaveMessageServerToClient extends BaseMessage {
   type: typeof MessageType.CHANNEL_LEAVE;
-  payload: ChannelLeavePayload;
+  payload: ChannelLeavePayloadServerToClient;
 }
 
 // Error (server sends this)
@@ -208,7 +218,7 @@ export type Message =
   | HelloMessageServerToClient
   | ChatSendMessageServerToClient
   | ChannelJoinMessageServerToClient
-  | ChannelLeaveMessage
+  | ChannelLeaveMessageServerToClient
   | ErrorMessage
   | ReactAddMessageServerToClient
   | ReactRemoveMessageServerToClient

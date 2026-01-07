@@ -1,4 +1,6 @@
+from datetime import datetime
 import logging
+from uuid import uuid4
 
 from pydantic import ValidationError
 
@@ -10,6 +12,8 @@ from chat_server.connection.manager import ConnectionManager
 from chat_server.protocol.basemessage import BaseMessage
 from chat_server.protocol.messages import (
     ChannelJoin,
+    ChannelLeave,
+    ChannelLeavePayload,
     ChatSend,
     ChatSendPayload,
     UserFrom,
@@ -63,3 +67,29 @@ async def handler_channel_join(
     except Exception as e:
         logging.info(f"Error adding {repr(ctx.user)} to {repr(channel_response)}: {e}")
         await manager.send_error(ctx.websocket, "Error trying to join the channel.")
+
+
+async def handler_channel_leave(
+    ctx: ConnectionContext, message: BaseMessage, manager: ConnectionManager
+) -> None:
+    """
+    Handle Channel Leave
+    """
+    try:
+        msg_in = ChannelLeave.model_validate(message)
+        payload = msg_in.payload
+
+        channel = manager.channel_srvc.get_channel_by_id(payload.channel_id)
+
+        # Check if channel exists
+        if channel is None:
+            return
+
+        # Check if user is in channel
+        if manager.channel_srvc.is_member(ctx.user, channel):
+            await manager.channel_srvc.leave_channel(ctx.user, channel)
+    except ValidationError:
+        await manager.send_error(ctx.websocket, "Malformed message")
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
+        await manager.send_error(ctx.websocket, "Unexpeted error. Try again.")

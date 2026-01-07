@@ -10,9 +10,10 @@ interface SidebarProps {
   currentChannelId: number | null
   onChannelSelect?: (channelId: number) => void
   onAddChannel?: () => void
+  onLeaveChannel?: (channelId: number) => void
 }
 
-export function Sidebar({ channels, currentChannelId, onChannelSelect, onAddChannel }: SidebarProps) {
+export function Sidebar({ channels, currentChannelId, onChannelSelect, onAddChannel, onLeaveChannel }: SidebarProps) {
   const { username, avatarColor } = useUser()
 
   return (
@@ -55,20 +56,32 @@ export function Sidebar({ channels, currentChannelId, onChannelSelect, onAddChan
               <p className="text-sm text-gray-500 italic px-2 py-1">No channels yet</p>
             ) : (
               channels.map((channel) => (
-                <button
+                <div
                   key={channel.id}
-                  onClick={() => onChannelSelect?.(channel.id)}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                  className={`group flex items-center justify-between px-3 py-2 rounded-md text-sm transition-colors cursor-pointer ${
                     currentChannelId === channel.id
                       ? 'bg-gray-700 text-white font-medium'
                       : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
+                  onClick={() => onChannelSelect?.(channel.id)}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span className="text-gray-400">#</span>
                     <span className="truncate">{channel.name}</span>
                   </div>
-                </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onLeaveChannel?.(channel.id)
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-600 rounded transition-all"
+                    title="Leave channel"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               ))
             )}
           </div>

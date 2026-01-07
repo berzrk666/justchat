@@ -8,11 +8,15 @@ from chat_server.protocol.enums import MessageType
 
 
 HANDLERS = {
-    MessageType.CHAT_SEND: chat_handler.handler_chat_send,
+    # Channel
     MessageType.CHANNEL_JOIN: channel_handler.handler_channel_join,
+    MessageType.CHANNEL_LEAVE: channel_handler.handler_channel_leave,
+    # Chat
+    MessageType.CHAT_SEND: chat_handler.handler_chat_send,
     MessageType.REACT_ADD: chat_handler.handler_chat_react,
     MessageType.REACT_REMOVE: chat_handler.handler_chat_react,
     MessageType.TYPING_START: chat_handler.handler_chat_typing,
+    # Chat Commands
     MessageType.CHAT_KICK: commands_handler.handler_kick,
     MessageType.CHAT_MUTE: commands_handler.handler_mute,
 }

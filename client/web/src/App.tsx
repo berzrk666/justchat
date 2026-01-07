@@ -303,6 +303,31 @@ function App() {
     setCurrentChannelId(channelId)
   }
 
+  function handleLeaveChannel(channelId: number) {
+    // Send leave message to server
+    const leaveMessage = MessageBuilder.channelLeave(channelId)
+    wsSendMessage(leaveMessage)
+
+    // Remove from joined channels tracking
+    joinedChannelsRef.current.delete(channelId)
+
+    // Remove from channels list
+    setChannels(prev => prev.filter(c => c.id !== channelId))
+
+    // Clear channel members for this channel
+    setChannelMembers(prev => {
+      const updated = new Map(prev)
+      updated.delete(channelId)
+      return updated
+    })
+
+    // If this was the current channel, switch to another or null
+    if (currentChannelId === channelId) {
+      const remainingChannels = channels.filter(c => c.id !== channelId)
+      setCurrentChannelId(remainingChannels.length > 0 ? remainingChannels[0].id : null)
+    }
+  }
+
   function handleMessageChange(newMessage: string) {
     setMessage(newMessage)
 
@@ -499,6 +524,7 @@ function App() {
         currentChannelId={currentChannelId}
         onChannelSelect={handleChannelSelect}
         onAddChannel={() => setIsJoinModalOpen(true)}
+        onLeaveChannel={handleLeaveChannel}
       />
 
       {/* Main Chat Area */}
