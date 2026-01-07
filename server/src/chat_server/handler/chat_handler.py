@@ -2,12 +2,16 @@ from datetime import datetime
 import logging
 import uuid
 
-from pydantic import ValidationError
-
+from chat_server.connection.channel import Channel
 from chat_server.db.db import async_session
 from chat_server.connection.context import ConnectionContext
 from chat_server.connection.manager import ConnectionManager
 from chat_server.db import crud
+from chat_server.handler.decorators import (
+    require_channel,
+    require_membership,
+    validate_message,
+)
 from chat_server.protocol.enums import MessageType
 from chat_server.protocol.messages import (
     ChatSend,
@@ -24,28 +28,21 @@ from chat_server.protocol.basemessage import BaseMessage
 # TODO: Too many code duplicated here
 
 
+@validate_message(ChatSend)
+@require_channel
+@require_membership
 async def handler_chat_send(
-    ctx: ConnectionContext, message: BaseMessage, manager: ConnectionManager
+    ctx: ConnectionContext,
+    message: BaseMessage,
+    manager: ConnectionManager,
+    *,
+    msg_in,
+    channel: Channel,
 ) -> None:
     """
     Handle an incoming message of the type ChatSend
     """
     try:
-        msg_in = ChatSend.model_validate(message)
-    except ValidationError:
-        await manager.send_error(ctx.websocket, "Malformed message")
-        return
-
-    try:
-        channel = manager.channel_srvc.get_channel_by_id(msg_in.payload.channel_id)
-
-        if channel is None:
-            await manager.send_error(ctx.websocket, "Channel does not exist.")
-            logging.error(
-                f"{repr(ctx.user)} attempted to send a message to a channel that does not exist: {msg_in.payload.channel_id}"
-            )
-            return
-
         response_payload = ChatSendPayload(
             channel_id=channel.id,
             sender=UserFrom.model_validate(ctx.user),
@@ -60,17 +57,6 @@ async def handler_chat_send(
             f"Server sending <{server_response.model_dump_json()}> to {repr(ctx.user)}"
         )
 
-        # Validate if user is a member of the channel
-        if not manager.channel_srvc.is_member(ctx.user, channel):
-            logging.warning(
-                f"{repr(ctx.user)} tried to send a message to channel {repr(channel)} without being a member."
-            )
-            await manager.send_error(
-                ctx.websocket,
-                "You must join this channel before sending messages",
-            )
-            return
-
         # Save message to database
         async with async_session() as session:
             await crud.create_message(session, server_response)
@@ -82,31 +68,20 @@ async def handler_chat_send(
         await manager.send_error(ctx.websocket, "Failed to send message")
 
 
+@validate_message(ReactAdd)
+@require_channel
+@require_membership
 async def handler_chat_react(
-    ctx: ConnectionContext, message: BaseMessage, manager: ConnectionManager
+    ctx: ConnectionContext,
+    message: BaseMessage,
+    manager: ConnectionManager,
+    *,
+    msg_in,
+    channel: Channel,
 ):
     """
     Handles add/remove reactions to messages
     """
-    try:
-        msg_in = ReactAdd.model_validate(message)
-    except ValidationError:
-        # FIX: I think this code never happens
-        try:
-            msg_in = ReactRemove.model_validate(message)
-        except ValidationError:
-            await manager.send_error(ctx.websocket, "Malformed message")
-        return
-
-    channel = manager.channel_srvc.get_channel_by_id(msg_in.payload.channel_id)
-
-    if channel is None:
-        await manager.send_error(ctx.websocket, "Channel does not exist.")
-        logging.error(
-            f"{repr(ctx.user)} attempted to send a message to a channel that does not exist: {msg_in.payload.channel_id}"
-        )
-        return
-
     # FIX: Does this message even exist ? How to check
     # if the message_id exists?
     # Also, how to block the user from sending many react add ?
@@ -123,54 +98,27 @@ async def handler_chat_react(
             timestamp=datetime.now(), id=uuid.uuid4(), payload=payload
         )
 
-    # Validate if user is a member of the channel
-    if not manager.channel_srvc.is_member(ctx.user, channel):
-        logging.warning(
-            f"{repr(ctx.user)} tried to send a reaction to channel {repr(channel)} without being a member."
-        )
-        await manager.send_error(
-            ctx.websocket,
-            "You must join this channel before reacting messages",
-        )
-        return
     await manager.channel_srvc.send_to_channel(channel, response)
 
 
+@validate_message(TypingStart)
+@require_channel
+@require_membership
 async def handler_chat_typing(
-    ctx: ConnectionContext, message: BaseMessage, manager: ConnectionManager
+    ctx: ConnectionContext,
+    message: BaseMessage,
+    manager: ConnectionManager,
+    *,
+    msg_in,
+    channel: Channel,
 ):
     """
     Handles typing start message
     """
-    try:
-        msg_in = TypingStart.model_validate(message)
-    except ValidationError:
-        await manager.send_error(ctx.websocket, "Malformed message")
-        return
-
     logging.debug(f"{msg_in = }")
-    channel = manager.channel_srvc.get_channel_by_id(msg_in.payload.channel_id)
-
-    if channel is None:
-        await manager.send_error(ctx.websocket, "Channel does not exist.")
-        logging.error(
-            f"{repr(ctx.user)} attempted to send a message to a channel that does not exist: {msg_in.payload.channel_id}"
-        )
-        return
 
     response_payload = TypingStartPayload(channel_id=channel.id, user=ctx.user)
     response = TypingStart(
         timestamp=datetime.now(), id=uuid.uuid4(), payload=response_payload
     )
-
-    # Validate if user is a member of the channel
-    if not manager.channel_srvc.is_member(ctx.user, channel):
-        logging.warning(
-            f"{repr(ctx.user)} tried to send a reaction to channel {repr(channel)} without being a member."
-        )
-        await manager.send_error(
-            ctx.websocket,
-            "You must join this channel before reacting messages",
-        )
-        return
     await manager.channel_srvc.send_to_channel(channel, response)

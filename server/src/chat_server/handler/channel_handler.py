@@ -18,23 +18,26 @@ from chat_server.protocol.messages import (
     ChatSendPayload,
     UserFrom,
 )
+from chat_server.handler.decorators import (
+    require_channel,
+    require_membership,
+    validate_message,
+)
 
 
 logger = logging.getLogger(__name__)
 
 
+@validate_message(ChannelJoin)
 async def handler_channel_join(
-    ctx: ConnectionContext, message: BaseMessage, manager: ConnectionManager
+    ctx: ConnectionContext,
+    message: BaseMessage,
+    manager: ConnectionManager,
+    msg_in,
 ) -> None:
     """
     Handle incoming message from Channel Join
     """
-
-    try:
-        msg_in = ChannelJoin.model_validate(message)
-    except ValidationError:
-        await manager.send_error(ctx.websocket, "Malformed message")
-        return
 
     channel_response = Channel(
         id=msg_in.payload.channel_id, name=f"Channel {msg_in.payload.channel_id}"
@@ -69,27 +72,22 @@ async def handler_channel_join(
         await manager.send_error(ctx.websocket, "Error trying to join the channel.")
 
 
+@validate_message(ChannelLeave)
+@require_channel
+@require_membership
 async def handler_channel_leave(
-    ctx: ConnectionContext, message: BaseMessage, manager: ConnectionManager
+    ctx: ConnectionContext,
+    message: BaseMessage,
+    manager: ConnectionManager,
+    *,
+    msg_in,
+    channel: Channel,
 ) -> None:
     """
     Handle Channel Leave
     """
     try:
-        msg_in = ChannelLeave.model_validate(message)
-        payload = msg_in.payload
-
-        channel = manager.channel_srvc.get_channel_by_id(payload.channel_id)
-
-        # Check if channel exists
-        if channel is None:
-            return
-
-        # Check if user is in channel
-        if manager.channel_srvc.is_member(ctx.user, channel):
-            await manager.channel_srvc.leave_channel(ctx.user, channel)
-    except ValidationError:
-        await manager.send_error(ctx.websocket, "Malformed message")
+        await manager.channel_srvc.leave_channel(ctx.user, channel)
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
         await manager.send_error(ctx.websocket, "Unexpeted error. Try again.")
