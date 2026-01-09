@@ -10,7 +10,8 @@
 - Typing indicator
 - Reactions
 - Chat Commands (/command)
-  - Kick
+  - Kick user from channel
+  - Mute user in channel (with duration and reason)
 
 ## TODOs
 
@@ -24,8 +25,9 @@
 - [ ] Add **pagination** for the message history
 - [X] Add typing indicator
 - [X] Add **slash commands**
-  - [X] Kick user
-  - [ ] Mute user
+  - [X] Kick
+  - [X] Mute / Unmute
+  - [ ] Ban/Unban
 - [ ] Add **more tests**
 
 ## Need fixing
@@ -52,3 +54,16 @@ your **implementation** of the protocol.
 
 After this the server will send every request of this new `MessageType`
 to the specified `handler`.
+
+#### Dependency Injections
+
+I also have some decorators (`server/handler/decorators.py`) that is commonly
+used in the protocols, i.e., check if the user is currently in the channel,
+if the user has permission, ...
+
+- `@validate_message(MessageType)`: Validate if the message received from the
+client is properly formatted.
+- `@require_channel`: Check if the channel the client is requesting exists.
+- `@require_membership`: Check if the user is currently in the channel.
+- `@require_permission(permission)`: Check if the user has the `permission`.
+- `@require_not_muted`: Check if the user is not muted.
