@@ -30,8 +30,7 @@
 
 ## Need fixing
 
-- [ ] ChannelMember when leaving and joining is not the best.
-  - Only sent when leaving all channels.
+-
 
 ## Message Protocol
 
