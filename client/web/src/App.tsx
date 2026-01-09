@@ -254,6 +254,10 @@ function App() {
         if (msg.type === 'chat_kick' && 'channel_id' in msg.payload) {
           return msg.payload.channel_id === currentChannelId
         }
+        // Show mute messages for current channel
+        if (msg.type === 'chat_mute' && 'channel_id' in msg.payload) {
+          return msg.payload.channel_id === currentChannelId
+        }
         // Show errors in current channel
         if (msg.type === 'error') {
           return true
@@ -437,6 +441,26 @@ function App() {
         const reason = parsed.args.slice(1).join(' ') || undefined
         const kickMessage = MessageBuilder.chatKick(currentChannelId, target, reason)
         wsSendMessage(kickMessage)
+        setMessage('')
+      } else if (parsed.command === 'mute') {
+        if (parsed.args.length < 1) {
+          alert('Usage: /mute <target> [duration] [reason]')
+          return
+        }
+        const target = parsed.args[0]
+        // Check if second argument is a number (duration)
+        let duration: number | undefined = undefined
+        let reasonStartIndex = 1
+        if (parsed.args.length > 1) {
+          const possibleDuration = parseInt(parsed.args[1])
+          if (!isNaN(possibleDuration)) {
+            duration = possibleDuration
+            reasonStartIndex = 2
+          }
+        }
+        const reason = parsed.args.slice(reasonStartIndex).join(' ') || undefined
+        const muteMessage = MessageBuilder.chatMute(currentChannelId, target, duration, reason)
+        wsSendMessage(muteMessage)
         setMessage('')
       } else {
         alert(`Unknown command: ${parsed.command}`)

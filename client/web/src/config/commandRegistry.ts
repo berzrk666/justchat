@@ -41,17 +41,31 @@ export const COMMANDS: Record<string, Command> = {
     ],
     format: '/kick <target> [reason]',
   },
-  // Future commands go here
-  // Example:
-  // mute: {
-  //   name: 'mute',
-  //   description: 'Mute a user in the channel',
-  //   arguments: [
-  //     { name: 'target', description: 'Username to mute', required: true, type: 'user' },
-  //     { name: 'duration', description: 'Duration in minutes', required: false, type: 'number' },
-  //   ],
-  //   format: '/mute <target> [duration]',
-  // },
+  mute: {
+    name: 'mute',
+    description: 'Mute a user in the channel',
+    arguments: [
+      {
+        name: 'target',
+        description: 'Username to mute',
+        required: true,
+        type: 'user',
+      },
+      {
+        name: 'duration',
+        description: 'Duration in seconds (optional)',
+        required: false,
+        type: 'number',
+      },
+      {
+        name: 'reason',
+        description: 'Optional reason for muting',
+        required: false,
+        type: 'string',
+      },
+    ],
+    format: '/mute <target> [duration] [reason]',
+  },
 };
 
 // Get all command names (for autocomplete filtering)

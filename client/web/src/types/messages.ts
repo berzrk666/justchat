@@ -6,6 +6,7 @@ export const MessageType = {
   REACT_REMOVE: "chat_react_remove",
   TYPING_START: "chat_typing",
   CHAT_KICK: "chat_kick",
+  CHAT_MUTE: "chat_mute",
   CHANNEL_JOIN: "channel_join",
   CHANNEL_LEAVE: "channel_leave",
   CHANNEL_MEMBERS: "channel_members",
@@ -213,6 +214,32 @@ export interface ChatKickMessageServerToClient extends BaseMessage {
   payload: ChatKickPayloadServerToClient;
 }
 
+// Chat Mute Command (Client → Server)
+export interface ChatMutePayloadClientToServer {
+  channel_id: number;
+  target: string; // Username to mute
+  duration?: number; // Duration in seconds (optional)
+  reason?: string; // Optional reason
+}
+
+export interface ChatMuteMessageClientToServer extends BaseMessage {
+  type: typeof MessageType.CHAT_MUTE;
+  payload: ChatMutePayloadClientToServer;
+}
+
+// Chat Mute (Server → Client: broadcasts when user is muted)
+export interface ChatMutePayloadServerToClient {
+  channel_id: number;
+  target: string; // Username who was muted
+  duration?: number; // Duration in seconds
+  reason?: string; // Optional reason
+}
+
+export interface ChatMuteMessageServerToClient extends BaseMessage {
+  type: typeof MessageType.CHAT_MUTE;
+  payload: ChatMutePayloadServerToClient;
+}
+
 // Union type for messages received from server
 export type Message =
   | HelloMessageServerToClient
@@ -224,4 +251,5 @@ export type Message =
   | ReactRemoveMessageServerToClient
   | ChannelMembersMessage
   | TypingStartMessageServerToClient
-  | ChatKickMessageServerToClient;
+  | ChatKickMessageServerToClient
+  | ChatMuteMessageServerToClient;

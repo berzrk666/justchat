@@ -8,6 +8,7 @@ import type {
   ReactRemoveMessageClientToServer,
   TypingStartMessageClientToServer,
   ChatKickMessageClientToServer,
+  ChatMuteMessageClientToServer,
 } from '../types/messages';
 
 export class MessageBuilder {
@@ -118,6 +119,24 @@ export class MessageBuilder {
       payload: {
         channel_id: channelId,
         target: target,
+        ...(reason && { reason }), // Include reason only if provided
+      },
+    };
+  }
+
+  /**
+   * Build CHAT_MUTE message (Client → Server).
+   * Mute a user in a channel.
+   */
+  static chatMute(channelId: number, target: string, duration?: number, reason?: string): ChatMuteMessageClientToServer {
+    return {
+      type: MessageType.CHAT_MUTE,
+      timestamp: new Date().toISOString(),
+      id: crypto.randomUUID(),
+      payload: {
+        channel_id: channelId,
+        target: target,
+        ...(duration !== undefined && { duration }), // Include duration only if provided
         ...(reason && { reason }), // Include reason only if provided
       },
     };
