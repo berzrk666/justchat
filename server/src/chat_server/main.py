@@ -100,7 +100,6 @@ manager = ConnectionManager(
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    print(get_password_hash("berzrk"))
     try:
         await manager.accept_connection(websocket)
     except WebSocketDisconnect:
