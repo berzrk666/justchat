@@ -22,7 +22,7 @@ class AuthenticationService:
         """
         if token is None:
             # Guest User
-            return self._create_guest_user()
+            return await self._create_guest_user()
         else:
             # Authenticated
             return await self._authenticate_token(token)
@@ -51,15 +51,11 @@ class AuthenticationService:
         except Exception as e:
             raise AuthenticationError(f"Authentication failed: {str(e)}")
 
-    def _create_guest_user(self) -> User:
+    async def _create_guest_user(self) -> User:
         """
         Create a Guest User.
         """
-        from random import randint
-
-        # Ensure there will be 0 in front
-        # e.g. 0024, 0432, 0002
-        num = str(randint(0, 9999)).zfill(4)
-        guest = User(username="Guest" + num)
-        logging.info(f"Creating Guest User: {repr(guest)}")
-        return guest
+        async with async_session() as session:
+            guest = await crud.create_guest_user(session)
+        logging.info(f"Created Guest User: {repr(guest)}")
+        return User(guest.username, guest.id, True)

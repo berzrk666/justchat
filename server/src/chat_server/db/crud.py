@@ -31,6 +31,46 @@ async def create_user(session: AsyncSession, user_in: UserCreate) -> UserTable:
         raise e
 
 
+async def create_guest_user(session: AsyncSession) -> UserTable:
+    """
+    Create a Guest user which consists of a username like GuestXXXX (4 random numbers),
+    and "no password" (technically its just a random password).
+
+    This user is deleted after 1 day.
+    """
+    from random import randint
+
+    # Ensure there will be 0 in front
+    # e.g. 0024, 0432, 0002
+
+    while True:
+        num = str(randint(0, 9999)).zfill(4)
+        guest_username = "Guest" + num
+
+        if not await get_user_by_username(session, guest_username):
+            break
+
+    # FIX: Generate random password
+    guest_password = "passpasspass"
+
+    user_db = UserTable(
+        username=guest_username,
+        hashed_password=get_password_hash(guest_password),
+        is_guest=True,
+    )
+
+    try:
+        session.add(user_db)
+        await session.commit()
+        await session.refresh(user_db)
+        logging.debug(f"Created guest user successfully: {user_db.username}")
+        return user_db
+    except Exception as e:
+        await session.rollback()
+        logging.warning(f"Failed to create guest user: {e}")
+        raise e
+
+
 async def get_user_by_username(
     session: AsyncSession, username: str
 ) -> UserTable | None:
@@ -156,7 +196,6 @@ async def unmute_user(session: AsyncSession, target_id: int, channel_id: int):
     """
     Unmute a user.
     """
-    pass
     try:
         mute_db = await get_mute(session, target_id, channel_id)
         if mute_db:

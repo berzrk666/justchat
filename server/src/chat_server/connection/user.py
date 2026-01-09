@@ -1,11 +1,12 @@
 class User:
-    def __init__(self, username: str, id: int | None = None) -> None:
+    def __init__(self, username: str, id: int, is_guest: bool = False) -> None:
         self.username = username
         self.id = id
+        self._is_guest = is_guest
 
     @property
     def is_guest(self) -> bool:
-        return self.id is None
+        return self._is_guest
 
     def __eq__(self, other):
         return self.username == other.username

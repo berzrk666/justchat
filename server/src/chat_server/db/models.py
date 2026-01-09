@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 from sqlalchemy import ForeignKey, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.types import DateTime, Integer, String
+from sqlalchemy.types import Boolean, DateTime, Integer, String
 
 USERNAME_MAX_LENGTH = 30
 
@@ -17,6 +17,8 @@ class UserTable(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(USERNAME_MAX_LENGTH), unique=True)
     hashed_password: Mapped[str] = mapped_column(String(255))
+    created_at: Mapped[str] = mapped_column(DateTime, default=func.now())
+    is_guest: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 class ChannelTable(Base):
