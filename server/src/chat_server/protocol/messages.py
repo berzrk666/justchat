@@ -155,3 +155,15 @@ class MuteCommandPayload(BaseModel):
 class MuteCommand(BaseMessage):
     type: Literal[MessageType.CHAT_MUTE] = MessageType.CHAT_MUTE
     payload: MuteCommandPayload
+
+
+class UnMuteCommandPayload(MuteCommandPayload):
+    model_config = {"extra": "forbid"}
+    channel_id: int
+    target: str
+
+
+@register_message(MessageType.CHAT_UNMUTE)
+class UnMuteCommand(BaseMessage):
+    type: Literal[MessageType.CHAT_UNMUTE] = MessageType.CHAT_UNMUTE
+    payload: UnMuteCommandPayload

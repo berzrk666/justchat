@@ -150,3 +150,18 @@ async def get_mute(
     except Exception as e:
         logging.error(f"Failed to check mute: {e}")
         raise e
+
+
+async def unmute_user(session: AsyncSession, target_id: int, channel_id: int):
+    """
+    Unmute a user.
+    """
+    pass
+    try:
+        mute_db = await get_mute(session, target_id, channel_id)
+        if mute_db:
+            await session.delete(mute_db)
+            await session.commit()
+            logging.info("Unmuted")
+    except Exception as e:
+        logging.error(f"Failed to unmute user in database: {e}")

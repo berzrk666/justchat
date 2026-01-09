@@ -7,6 +7,7 @@ export const MessageType = {
   TYPING_START: "chat_typing",
   CHAT_KICK: "chat_kick",
   CHAT_MUTE: "chat_mute",
+  CHAT_UNMUTE: "chat_unmute",
   CHANNEL_JOIN: "channel_join",
   CHANNEL_LEAVE: "channel_leave",
   CHANNEL_MEMBERS: "channel_members",
@@ -240,6 +241,28 @@ export interface ChatMuteMessageServerToClient extends BaseMessage {
   payload: ChatMutePayloadServerToClient;
 }
 
+// Chat Unmute Command (Client → Server)
+export interface ChatUnmutePayloadClientToServer {
+  channel_id: number;
+  target: string; // Username to unmute
+}
+
+export interface ChatUnmuteMessageClientToServer extends BaseMessage {
+  type: typeof MessageType.CHAT_UNMUTE;
+  payload: ChatUnmutePayloadClientToServer;
+}
+
+// Chat Unmute (Server → Client: broadcasts when user is unmuted)
+export interface ChatUnmutePayloadServerToClient {
+  channel_id: number;
+  target: string; // Username who was unmuted
+}
+
+export interface ChatUnmuteMessageServerToClient extends BaseMessage {
+  type: typeof MessageType.CHAT_UNMUTE;
+  payload: ChatUnmutePayloadServerToClient;
+}
+
 // Union type for messages received from server
 export type Message =
   | HelloMessageServerToClient
@@ -252,4 +275,5 @@ export type Message =
   | ChannelMembersMessage
   | TypingStartMessageServerToClient
   | ChatKickMessageServerToClient
-  | ChatMuteMessageServerToClient;
+  | ChatMuteMessageServerToClient
+  | ChatUnmuteMessageServerToClient;

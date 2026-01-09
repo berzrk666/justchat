@@ -7,6 +7,7 @@ import { ChannelLeaveMessage } from '../components/messages/ChannelLeaveMessage'
 import { ErrorMessage } from '../components/messages/ErrorMessage';
 import { KickMessage } from '../components/messages/KickMessage';
 import { MuteMessage } from '../components/messages/MuteMessage';
+import { UnmuteMessage } from '../components/messages/UnmuteMessage';
 
 // All message type registrations in one place
 export function initializeMessageHandlers() {
@@ -52,6 +53,10 @@ export function initializeMessageHandlers() {
   // CHAT_MUTE (server broadcasts when someone is muted)
   registerParser(MessageType.CHAT_MUTE, (data) => data as any);
   registerRenderer(MessageType.CHAT_MUTE, MuteMessage);
+
+  // CHAT_UNMUTE (server broadcasts when someone is unmuted)
+  registerParser(MessageType.CHAT_UNMUTE, (data) => data as any);
+  registerRenderer(MessageType.CHAT_UNMUTE, UnmuteMessage);
 
   // Future types registered here
 }

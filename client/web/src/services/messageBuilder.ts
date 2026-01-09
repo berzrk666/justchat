@@ -9,6 +9,7 @@ import type {
   TypingStartMessageClientToServer,
   ChatKickMessageClientToServer,
   ChatMuteMessageClientToServer,
+  ChatUnmuteMessageClientToServer,
 } from '../types/messages';
 
 export class MessageBuilder {
@@ -138,6 +139,22 @@ export class MessageBuilder {
         target: target,
         ...(duration !== undefined && { duration }), // Include duration only if provided
         ...(reason && { reason }), // Include reason only if provided
+      },
+    };
+  }
+
+  /**
+   * Build CHAT_UNMUTE message (Client → Server).
+   * Unmute a user in a channel.
+   */
+  static chatUnmute(channelId: number, target: string): ChatUnmuteMessageClientToServer {
+    return {
+      type: MessageType.CHAT_UNMUTE,
+      timestamp: new Date().toISOString(),
+      id: crypto.randomUUID(),
+      payload: {
+        channel_id: channelId,
+        target: target,
       },
     };
   }

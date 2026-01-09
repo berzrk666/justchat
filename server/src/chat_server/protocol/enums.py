@@ -17,6 +17,7 @@ class MessageType(StrEnum):
     # Chat Commands
     CHAT_KICK = "chat_kick"  # Kick a user from a channel
     CHAT_MUTE = "chat_mute"  # Mute a user in a channel
+    CHAT_UNMUTE = "chat_unmute"  # Unmute a user in a channel
 
     # Channel
     CHANNEL_JOIN = "channel_join"

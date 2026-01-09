@@ -12,7 +12,13 @@ from chat_server.handler.decorators import (
     validate_message,
 )
 from chat_server.protocol.basemessage import BaseMessage
-from chat_server.protocol.messages import KickCommand, MuteCommand, MuteCommandPayload
+from chat_server.protocol.messages import (
+    KickCommand,
+    MuteCommand,
+    MuteCommandPayload,
+    UnMuteCommand,
+    UnMuteCommandPayload,
+)
 
 
 @validate_message(KickCommand)
@@ -93,3 +99,43 @@ async def handler_mute(
 
     except Exception as e:
         logging.error(f"Error handling CHAT_MUTE: {e}")
+
+
+@validate_message(UnMuteCommand)
+@require_channel
+@require_membership
+@require_permission("mute")
+async def handler_unmute(
+    ctx: ConnectionContext,
+    message: BaseMessage,
+    manager: ConnectionManager,
+    *,
+    msg_in,  # require_channel
+    channel: Channel,  # @require_membership
+):
+    """
+    Handle unmute command
+    """
+    try:
+        payload = msg_in.payload
+        target = manager.channel_srvc.find_member_by_username(
+            payload.channel_id, payload.target
+        )
+
+        if target:
+            await manager.moderation.unmute_user(target, channel)
+            logging.info(f"{repr(ctx.user)} is unmuting {target}.")
+
+            server_payload = UnMuteCommandPayload(
+                channel_id=channel.id,
+                target=target.username,
+            )
+
+            server_rsp = UnMuteCommand(
+                timestamp=datetime.now(), id=uuid4(), payload=server_payload
+            )
+
+            await manager.channel_srvc.send_to_channel(channel, server_rsp)
+
+    except Exception as e:
+        logging.error(f"Error handling CHAT_UNMUTE: {e}")

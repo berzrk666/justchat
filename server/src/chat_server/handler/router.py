@@ -19,6 +19,7 @@ HANDLERS = {
     # Chat Commands
     MessageType.CHAT_KICK: commands_handler.handler_kick,
     MessageType.CHAT_MUTE: commands_handler.handler_mute,
+    MessageType.CHAT_UNMUTE: commands_handler.handler_unmute,
 }
 
 

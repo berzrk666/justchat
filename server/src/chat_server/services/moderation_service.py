@@ -29,6 +29,13 @@ class ModerationService:
                 session, target.id, issuer.id, channel.id, duration, reason
             )
 
+    async def unmute_user(self, target: User, channel: Channel):
+        """
+        Unmute user
+        """
+        async with async_session() as session:
+            await crud.unmute_user(session, target.id, channel.id)
+
     async def is_muted(self, target: User, channel: Channel) -> bool:
         """
         Check if `target` is muted at the `channel`.

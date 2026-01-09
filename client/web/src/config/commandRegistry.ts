@@ -66,6 +66,19 @@ export const COMMANDS: Record<string, Command> = {
     ],
     format: '/mute <target> [duration] [reason]',
   },
+  unmute: {
+    name: 'unmute',
+    description: 'Unmute a user in the channel',
+    arguments: [
+      {
+        name: 'target',
+        description: 'Username to unmute',
+        required: true,
+        type: 'user',
+      },
+    ],
+    format: '/unmute <target>',
+  },
 };
 
 // Get all command names (for autocomplete filtering)

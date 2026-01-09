@@ -243,7 +243,7 @@ function App() {
     }
   }, [])
 
-  // Listen for CHAT_MUTE messages to track when current user is muted
+  // Listen for CHAT_MUTE and CHAT_UNMUTE messages to track when current user is muted/unmuted
   useEffect(() => {
     messages.forEach((message, index) => {
       const messageKey = message.id || `${message.timestamp}-${message.type}-${index}`
@@ -267,6 +267,19 @@ function App() {
             setMuteEndTime(-1)
             setMuteTimeRemaining(0)
           }
+        }
+
+        processedMessageIds.current.add(messageKey)
+      }
+
+      if (message.type === 'chat_unmute') {
+        const payload = message.payload as { channel_id: number; target: string }
+
+        // Check if the unmute is for the current user
+        if (payload.target === username) {
+          // Clear the mute state
+          setMuteEndTime(null)
+          setMuteTimeRemaining(0)
         }
 
         processedMessageIds.current.add(messageKey)
@@ -309,6 +322,10 @@ function App() {
         }
         // Show mute messages for current channel
         if (msg.type === 'chat_mute' && 'channel_id' in msg.payload) {
+          return msg.payload.channel_id === currentChannelId
+        }
+        // Show unmute messages for current channel
+        if (msg.type === 'chat_unmute' && 'channel_id' in msg.payload) {
           return msg.payload.channel_id === currentChannelId
         }
         // Show errors in current channel
@@ -514,6 +531,15 @@ function App() {
         const reason = parsed.args.slice(reasonStartIndex).join(' ') || undefined
         const muteMessage = MessageBuilder.chatMute(currentChannelId, target, duration, reason)
         wsSendMessage(muteMessage)
+        setMessage('')
+      } else if (parsed.command === 'unmute') {
+        if (parsed.args.length < 1) {
+          alert('Usage: /unmute <target>')
+          return
+        }
+        const target = parsed.args[0]
+        const unmuteMessage = MessageBuilder.chatUnmute(currentChannelId, target)
+        wsSendMessage(unmuteMessage)
         setMessage('')
       } else {
         alert(`Unknown command: ${parsed.command}`)

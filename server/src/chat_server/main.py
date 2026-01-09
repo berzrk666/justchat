@@ -8,6 +8,7 @@ from chat_server.connection.manager import ConnectionManager
 from chat_server.db.db import init_db
 from chat_server.infrastructure.channel_manager import ChannelManager
 from chat_server.infrastructure.connection_registry import ConnectionRegistry
+from chat_server.security.utils import get_password_hash
 from chat_server.services.authorization_service import AuthenticationService
 from chat_server.services.channel_service import ChannelService
 from chat_server.services.membership_service import MembershipService
@@ -99,6 +100,7 @@ manager = ConnectionManager(
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    print(get_password_hash("berzrk"))
     try:
         await manager.accept_connection(websocket)
     except WebSocketDisconnect:
