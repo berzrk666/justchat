@@ -20,6 +20,7 @@ interface Channel {
 interface Member {
   username: string
   isOnline: boolean // For now, all members from server are considered online
+  isGuest: boolean
 }
 
 function App() {
@@ -92,10 +93,11 @@ function App() {
       }
 
       if (message.type === 'channel_members') {
-        const payload = message.payload as { channel_id: number; members: { username: string }[] }
+        const payload = message.payload as { channel_id: number; members: { username: string; is_guest: boolean }[] }
         const members: Member[] = payload.members.map(m => ({
           username: m.username,
-          isOnline: true // All members in the list are currently online
+          isOnline: true, // All members in the list are currently online
+          isGuest: m.is_guest
         }))
 
         console.log(`[App] UPDATING members for channel ${payload.channel_id}:`, {

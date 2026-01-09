@@ -26,6 +26,7 @@ export interface BaseMessage {
 // User information object (matches backend UserFrom)
 export interface UserFrom {
   username: string;
+  is_guest: boolean;
 }
 
 // Hello (Client → Server: send token only, no username)

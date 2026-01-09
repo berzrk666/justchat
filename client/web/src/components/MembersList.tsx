@@ -1,6 +1,7 @@
 interface Member {
   username: string
   isOnline: boolean
+  isGuest: boolean
 }
 
 interface MembersListProps {
@@ -143,9 +144,16 @@ function MemberItem({ member }: { member: Member }) {
 
       {/* Username */}
       <div className="flex-1 min-w-0">
-        <p className={`text-sm truncate ${member.isOnline ? 'text-white' : 'text-gray-400'}`}>
-          {member.username}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className={`text-sm truncate ${member.isOnline ? 'text-white' : 'text-gray-400'}`}>
+            {member.username}
+          </p>
+          {member.isGuest && (
+            <span className="px-1.5 py-0.5 text-xs font-medium bg-gray-600 text-gray-300 rounded border border-gray-500">
+              Guest
+            </span>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -22,7 +22,7 @@ interface WebSocketProviderProps {
   children: ReactNode
   username: string
   enabled?: boolean // Allow disabling WebSocket until user is ready
-  onUsernameAssigned?: (username: string) => void // Callback for server-assigned username
+  onUsernameAssigned?: (username: string, isGuest: boolean) => void // Callback for server-assigned username
 }
 
 export function WebSocketProvider({ children, username, enabled = true, onUsernameAssigned }: WebSocketProviderProps) {
@@ -77,12 +77,13 @@ export function WebSocketProvider({ children, username, enabled = true, onUserna
 
           if (helloPayload.user?.username) {
             console.log('[WebSocket] Server assigned username:', helloPayload.user.username)
+            console.log('[WebSocket] Server assigned is_guest:', helloPayload.user.is_guest)
             console.log('[WebSocket] onUsernameAssigned callback exists?', !!onUsernameAssigned)
 
             // Update username with server-assigned value (for guests)
             if (onUsernameAssigned) {
-              console.log('[WebSocket] Calling onUsernameAssigned with:', helloPayload.user.username)
-              onUsernameAssigned(helloPayload.user.username)
+              console.log('[WebSocket] Calling onUsernameAssigned with:', helloPayload.user.username, helloPayload.user.is_guest)
+              onUsernameAssigned(helloPayload.user.username, helloPayload.user.is_guest || false)
             } else {
               console.warn('[WebSocket] onUsernameAssigned callback is not provided!')
             }

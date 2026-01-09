@@ -4,9 +4,10 @@ import { tokenStorage } from '../services/tokenStorage'
 interface UserContextType {
   username: string
   displayName: string
-  setUsername: (username: string) => void
+  setUsername: (username: string, isGuest?: boolean) => void
   avatarColor: string
   isAuthenticated: boolean
+  isGuest: boolean
   login: (username: string) => void
   logout: () => void
 }
@@ -32,6 +33,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return tokenStorage.hasValidToken()
   })
 
+  const [isGuest, setIsGuest] = useState<boolean>(() => {
+    const stored = localStorage.getItem('chat-is-guest')
+    return stored === 'true'
+  })
+
   const [displayName, setDisplayName] = useState<string>(() => {
     const stored = localStorage.getItem('chat-display-name')
     return stored || 'Guest'
@@ -53,19 +59,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('chat-avatar-color', avatarColor)
   }, [avatarColor])
 
-  const setUsername = (newDisplayName: string) => {
-    console.log('[UserContext] setUsername called with:', newDisplayName)
+  useEffect(() => {
+    localStorage.setItem('chat-is-guest', isGuest.toString())
+  }, [isGuest])
+
+  const setUsername = (newDisplayName: string, newIsGuest: boolean = true) => {
+    console.log('[UserContext] setUsername called with:', newDisplayName, 'isGuest:', newIsGuest)
     setDisplayName(newDisplayName)
+    setIsGuest(newIsGuest)
   }
 
   const login = (loggedInUsername: string) => {
     setDisplayName(loggedInUsername)
     setIsAuthenticated(true)
+    setIsGuest(false) // Authenticated users are not guests
   }
 
   const logout = () => {
     tokenStorage.clearToken()
     setIsAuthenticated(false)
+    setIsGuest(true)
     // Optionally reset to guest mode
     setDisplayName('Guest')
   }
@@ -78,6 +91,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUsername,
         avatarColor,
         isAuthenticated,
+        isGuest,
         login,
         logout
       }}

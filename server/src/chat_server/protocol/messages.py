@@ -13,6 +13,7 @@ class UserFrom(BaseModel):
     """
 
     username: str
+    is_guest: bool
     model_config = ConfigDict(from_attributes=True)
 
 
