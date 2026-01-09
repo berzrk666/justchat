@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, datetime_CAPI
 from uuid import uuid4
 
 from chat_server.connection.channel import Channel
@@ -12,7 +12,7 @@ from chat_server.handler.decorators import (
     validate_message,
 )
 from chat_server.protocol.basemessage import BaseMessage
-from chat_server.protocol.messages import KickCommand, MuteCommand
+from chat_server.protocol.messages import KickCommand, MuteCommand, MuteCommandPayload
 
 
 @validate_message(KickCommand)
@@ -69,7 +69,6 @@ async def handler_mute(
         )
 
         if target:
-            # TODO: Craft Kick Message
             await manager.moderation.mute_user(
                 target=target,
                 issuer=ctx.user,
@@ -78,5 +77,19 @@ async def handler_mute(
                 reason=payload.reason,
             )
             logging.info(f"{repr(ctx.user)} is muting {target}.")
+
+            server_payload = MuteCommandPayload(
+                channel_id=channel.id,
+                target=target.username,
+                duration=payload.duration,
+                reason=payload.reason,
+            )
+
+            server_rsp = MuteCommand(
+                timestamp=datetime.now(), id=uuid4(), payload=server_payload
+            )
+
+            await manager.channel_srvc.send_to_channel(channel, server_rsp)
+
     except Exception as e:
         logging.error(f"Error handling CHAT_MUTE: {e}")

@@ -6,6 +6,7 @@ import { ChannelJoinMessage } from '../components/messages/ChannelJoinMessage';
 import { ChannelLeaveMessage } from '../components/messages/ChannelLeaveMessage';
 import { ErrorMessage } from '../components/messages/ErrorMessage';
 import { KickMessage } from '../components/messages/KickMessage';
+import { MuteMessage } from '../components/messages/MuteMessage';
 
 // All message type registrations in one place
 export function initializeMessageHandlers() {
@@ -47,6 +48,10 @@ export function initializeMessageHandlers() {
   // CHAT_KICK (server broadcasts when someone is kicked)
   registerParser(MessageType.CHAT_KICK, (data) => data as any);
   registerRenderer(MessageType.CHAT_KICK, KickMessage);
+
+  // CHAT_MUTE (server broadcasts when someone is muted)
+  registerParser(MessageType.CHAT_MUTE, (data) => data as any);
+  registerRenderer(MessageType.CHAT_MUTE, MuteMessage);
 
   // Future types registered here
 }

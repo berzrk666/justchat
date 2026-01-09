@@ -51,6 +51,10 @@ function App() {
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0)
   const messageInputRef = useRef<HTMLInputElement>(null)
 
+  // Mute state tracking
+  const [muteEndTime, setMuteEndTime] = useState<number | null>(null)
+  const [muteTimeRemaining, setMuteTimeRemaining] = useState<number>(0)
+
   // Initialize message handlers on mount
   useEffect(() => {
     initializeMessageHandlers()
@@ -238,6 +242,55 @@ function App() {
       typingTimeoutsRef.current.clear()
     }
   }, [])
+
+  // Listen for CHAT_MUTE messages to track when current user is muted
+  useEffect(() => {
+    messages.forEach((message, index) => {
+      const messageKey = message.id || `${message.timestamp}-${message.type}-${index}`
+
+      if (processedMessageIds.current.has(messageKey)) {
+        return
+      }
+
+      if (message.type === 'chat_mute') {
+        const payload = message.payload as { channel_id: number; target: string; duration?: number }
+
+        // Check if the mute is for the current user
+        if (payload.target === username) {
+          if (payload.duration) {
+            // Set the mute end time (current time + duration in milliseconds)
+            const endTime = Date.now() + (payload.duration * 1000)
+            setMuteEndTime(endTime)
+            setMuteTimeRemaining(payload.duration)
+          } else {
+            // Indefinite mute
+            setMuteEndTime(-1)
+            setMuteTimeRemaining(0)
+          }
+        }
+
+        processedMessageIds.current.add(messageKey)
+      }
+    })
+  }, [messages, username])
+
+  // Countdown timer for mute duration
+  useEffect(() => {
+    if (!muteEndTime || muteEndTime === -1) return
+
+    const interval = setInterval(() => {
+      const timeLeft = Math.max(0, Math.ceil((muteEndTime - Date.now()) / 1000))
+      setMuteTimeRemaining(timeLeft)
+
+      if (timeLeft === 0) {
+        // Mute expired
+        setMuteEndTime(null)
+        setMuteTimeRemaining(0)
+      }
+    }, 100) // Update more frequently for smooth countdown
+
+    return () => clearInterval(interval)
+  }, [muteEndTime])
 
   // Filter messages for current channel
   const filteredMessages = currentChannelId !== null
@@ -674,24 +727,34 @@ function App() {
               />
             )}
 
-            <input
-              ref={messageInputRef}
-              type="text"
-              value={message}
-              onChange={(e) => handleMessageChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                currentChannelId !== null
-                  ? `Message #${channels.find(c => c.id === currentChannelId)?.name || `Channel ${currentChannelId}`}`
-                  : 'Join a channel to send messages'
-              }
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={!isConnected || currentChannelId === null}
-              autoComplete="off"
-            />
+            <div className="flex-1 relative">
+              <input
+                ref={messageInputRef}
+                type="text"
+                value={message}
+                onChange={(e) => handleMessageChange(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  muteEndTime
+                    ? muteEndTime === -1
+                      ? '🔇 You are muted indefinitely'
+                      : `🔇 You are muted - ${Math.floor(muteTimeRemaining / 60)}:${(muteTimeRemaining % 60).toString().padStart(2, '0')} remaining`
+                    : currentChannelId !== null
+                    ? `Message #${channels.find(c => c.id === currentChannelId)?.name || `Channel ${currentChannelId}`}`
+                    : 'Join a channel to send messages'
+                }
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent ${
+                  muteEndTime
+                    ? 'border-orange-400 bg-orange-50 text-gray-400 cursor-not-allowed focus:ring-orange-400'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
+                disabled={!isConnected || currentChannelId === null || !!muteEndTime}
+                autoComplete="off"
+              />
+            </div>
             <button
               type="submit"
-              disabled={!isConnected || !message.trim() || currentChannelId === null}
+              disabled={!isConnected || !message.trim() || currentChannelId === null || !!muteEndTime}
               className="px-6 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               Send

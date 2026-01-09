@@ -104,6 +104,7 @@ async def handler_chat_react(
 @validate_message(TypingStart)
 @require_channel
 @require_membership
+@require_not_muted
 async def handler_chat_typing(
     ctx: ConnectionContext,
     message: BaseMessage,
