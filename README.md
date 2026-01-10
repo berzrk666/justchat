@@ -67,3 +67,28 @@ client is properly formatted.
 - `@require_membership`: Check if the user is currently in the channel.
 - `@require_permission(permission)`: Check if the user has the `permission`.
 - `@require_not_muted`: Check if the user is not muted.
+
+## Design
+
+- Top-Level Object is the `ConnectionManager` that will accept a WebSocket
+connection and then process every data received.
+  - Ensure the first message ("hello") by the user is correct.
+  - Check if its an authenticated user or creates a guest user.
+  - Validate all the subsequent messages and then send then to a router
+  that will handle the message.
+  - Handle the disconnect by the user.
+
+### Services
+
+- The `ConnectionManager` depends on some services objects that handle
+certain features.
+  - `AuthenticationService` is what will authenticate an user account or
+  create a guest user.
+  - `ChannelService`: contains the API needed to interact with a channel. You
+  can "join" an User to a channel, check if a User is in a channel, ...
+    - `MembershipService` "*low-level*" API to manage the relationship between a
+    user/client and the channel connected.
+  - `MessageBroker`: is the service to send messages to different targets like
+  user, a channel, or, if needed, a WebSocket.
+  - `ModerationService` manages the chat commands related to moderation
+  (`mute`, `ban`)
