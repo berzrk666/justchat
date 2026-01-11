@@ -1,4 +1,4 @@
-# Chat
+# Simple Live Chat using WebSockets
 
 ## Features
 
@@ -47,7 +47,8 @@ All you need is:
 1. Create a `MessageType` enum in `server/protocol/enums.py`  that will be used
 to identify this protocol.
 2. Create the **Payload Body** in `server/protocol/messages.py` that will
-contain all the data that is needed.
+contain all the data that is needed for this protocol to work. What is
+sent/received by both the client and server.
 3. Create a `handler` for your protocol inside `server/handler/` that will contain
 your **implementation** of the protocol.
 4. And **register** this `handler` to a `MessageType` inside `server/handler/routes.py`
@@ -68,6 +69,26 @@ client is properly formatted.
 - `@require_permission(permission)`: Check if the user has the `permission`.
 - `@require_not_muted`: Check if the user is not muted.
 
+### Protocols Format
+
+Every message protocol (`protocol/messages.py`) is a child of the `BaseMessage`
+(`protocol/basemessage`), which represents the protocol in its base form.
+
+Every message contains a `payload` that will hold the data needed for certain
+messages, e.g. a `CHAT_SEND` message that will handle every message sent by
+a user expects the sender's `username`, the `channel_id` and the `content`
+of the message, while a `CHANNEL_JOIN` just expects the `channel_id` and
+an User (that is filled by the server).
+
+That means both messages are `BaseMessage`, however their `payload` will be
+their different.
+
+#### Validation of the Message Protocol
+
+Validation is done *automatically* by **Pydantic** since `BaseMessage`
+is created using Pydantic's `BaseModel`. And the `payload` should also
+be based of `BaseModel` to ensure validation by Pydantic.
+
 ## Design
 
 - Top-Level Object is the `ConnectionManager` that will accept a WebSocket
@@ -76,7 +97,7 @@ connection and then process every data received.
   - Check if its an authenticated user or creates a guest user.
   - Validate all the subsequent messages and then send then to a router
   that will handle the message.
-  - Handle the disconnect by the user.
+  - Handle the disconnect by the user (closed the tab)
 
 ### Services
 
