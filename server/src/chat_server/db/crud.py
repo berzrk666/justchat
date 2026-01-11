@@ -119,6 +119,7 @@ async def create_message(
         await session.commit()
         await session.refresh(message_db)
         logging.debug(f"Created message in database successfully: {repr(message_db)}")
+        return message_db
     except Exception as e:
         await session.rollback()
         logging.error(f"Failed to create message in database: {e}")
