@@ -89,9 +89,7 @@ moderation_service = ModerationService()
 
 manager = ConnectionManager(
     connection_registry,
-    # channel_manager,
     auth_service,
-    # membership_service,
     message_broker,
     channel_service,
     moderation_service,
