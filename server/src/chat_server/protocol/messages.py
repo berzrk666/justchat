@@ -13,7 +13,7 @@ class UserFrom(BaseModel):
     """
 
     username: str
-    is_guest: bool
+    is_guest: bool = False
     model_config = ConfigDict(from_attributes=True)
 
 
