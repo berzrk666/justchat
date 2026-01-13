@@ -22,8 +22,8 @@ export function ReactionsProvider({ children }: { children: ReactNode }) {
   // Listen for reaction messages and update state
   useEffect(() => {
     messages.forEach((msg: Message) => {
-      // Skip if we've already processed this message
-      if (processedMessageIds.has(msg.id)) {
+      // Skip if no id or we've already processed this message
+      if (!msg.id || processedMessageIds.has(msg.id)) {
         return
       }
 
@@ -36,7 +36,7 @@ export function ReactionsProvider({ children }: { children: ReactNode }) {
           newMap.set(message_id, msgReactions)
           return newMap
         })
-        setProcessedMessageIds(prev => new Set(prev).add(msg.id))
+        setProcessedMessageIds(prev => new Set(prev).add(msg.id!))
       } else if (msg.type === 'chat_react_remove') {
         const { message_id, emote } = msg.payload
         setReactions(prev => {
@@ -57,7 +57,7 @@ export function ReactionsProvider({ children }: { children: ReactNode }) {
           }
           return newMap
         })
-        setProcessedMessageIds(prev => new Set(prev).add(msg.id))
+        setProcessedMessageIds(prev => new Set(prev).add(msg.id!))
       }
     })
   }, [messages, processedMessageIds])

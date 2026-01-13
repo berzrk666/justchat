@@ -1,7 +1,7 @@
-import type { ChannelLeaveMessage } from '../../types/messages';
+import type { ChannelLeaveMessageServerToClient } from '../../types/messages';
 
 interface ChannelLeaveMessageProps {
-  message: ChannelLeaveMessage;
+  message: ChannelLeaveMessageServerToClient;
 }
 
 export function ChannelLeaveMessage({ message }: ChannelLeaveMessageProps) {

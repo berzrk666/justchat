@@ -43,7 +43,7 @@ function App() {
 
   // Track typing users per channel (channelId -> Set<username>)
   const [typingUsers, setTypingUsers] = useState<Map<number, Map<string, number>>>(new Map())
-  const typingTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map())
+  const typingTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
   const lastTypingSentRef = useRef<Map<number, number>>(new Map()) // Track when we last sent TYPING_START per channel
 
   // Command autocomplete state

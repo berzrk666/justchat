@@ -40,7 +40,7 @@ export function parseMessage(rawData: string): Message | null {
     console.log('[MessageParser] Message type:', data.type);
     console.log('[MessageParser] Available parsers:', Object.keys(parsers));
 
-    const parser = parsers[data.type];
+    const parser = parsers[data.type as MessageTypeValue];
 
     if (!parser) {
       console.warn("[MessageParser] No parser for message type:", data.type);

@@ -26,13 +26,14 @@ export interface UserPublic {
 }
 
 export class AuthError extends Error {
-  constructor(
-    message: string,
-    public statusCode?: number,
-    public detail?: string
-  ) {
+  statusCode?: number
+  detail?: string
+
+  constructor(message: string, statusCode?: number, detail?: string) {
     super(message)
     this.name = 'AuthError'
+    this.statusCode = statusCode
+    this.detail = detail
   }
 }
 

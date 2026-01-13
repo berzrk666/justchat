@@ -30,7 +30,7 @@ export function WebSocketProvider({ children, username, enabled = true, onUserna
   const [isReady, setIsReady] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const wsRef = useRef<WebSocket | null>(null)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>()
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isIntentionalDisconnect = useRef(false)
 
   const connect = useCallback(() => {
