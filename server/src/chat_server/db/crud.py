@@ -26,8 +26,8 @@ async def create_user(session: AsyncSession, user_in: UserCreate) -> UserTable |
         logging.debug(f"Created user successfully: {user_db}")
         return user_db
     except IntegrityError:
+        await session.rollback()
         logging.warning("Attempted to create user with existing username.")
-        return None
     except Exception as e:
         await session.rollback()
         logging.warning(f"Failed to add a user: {e}")
