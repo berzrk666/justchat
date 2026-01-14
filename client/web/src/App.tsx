@@ -6,6 +6,7 @@ import { MessageBuilder } from './services/messageBuilder'
 import { Sidebar } from './components/Sidebar'
 import { MembersList } from './components/MembersList'
 import { LoginModal } from './components/LoginModal'
+import { SignupModal } from './components/SignupModal'
 import { CommandAutocomplete } from './components/CommandAutocomplete'
 import { useUser } from './contexts/UserContext'
 import { useWebSocket } from './contexts/WebSocketContext'
@@ -28,6 +29,7 @@ function App() {
   const { isConnected, isReady, messages, sendMessage: wsSendMessage, reconnect } = useWebSocket()
   const [message, setMessage] = useState('')
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false)
   const [channels, setChannels] = useState<Channel[]>([])
   const [currentChannelId, setCurrentChannelId] = useState<number | null>(null)
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
@@ -577,6 +579,19 @@ function App() {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onLoginSuccess={handleLoginSuccess}
+        onSwitchToSignup={() => {
+          setIsLoginModalOpen(false)
+          setIsSignupModalOpen(true)
+        }}
+      />
+      <SignupModal
+        isOpen={isSignupModalOpen}
+        onClose={() => setIsSignupModalOpen(false)}
+        onSignupSuccess={handleLoginSuccess}
+        onSwitchToLogin={() => {
+          setIsSignupModalOpen(false)
+          setIsLoginModalOpen(true)
+        }}
       />
 
       {/* Join Channel Modal */}

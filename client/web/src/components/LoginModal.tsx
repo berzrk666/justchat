@@ -6,9 +6,10 @@ interface LoginModalProps {
   isOpen: boolean
   onClose: () => void
   onLoginSuccess: (username: string) => void
+  onSwitchToSignup?: () => void
 }
 
-export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps) {
+export function LoginModal({ isOpen, onClose, onLoginSuccess, onSwitchToSignup }: LoginModalProps) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -121,7 +122,20 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
         </form>
 
         <div className="mt-4 text-center text-sm text-gray-600">
-          <p>Don't have an account? Signup coming soon!</p>
+          <p>
+            Don't have an account?{' '}
+            {onSwitchToSignup ? (
+              <button
+                type="button"
+                onClick={onSwitchToSignup}
+                className="text-blue-500 hover:text-blue-600 font-medium"
+              >
+                Sign up
+              </button>
+            ) : (
+              <span>Sign up coming soon!</span>
+            )}
+          </p>
         </div>
       </div>
     </div>
