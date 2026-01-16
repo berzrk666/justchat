@@ -17,5 +17,9 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22 #default
-          script: whoami
-        
+          script: |
+            cd ~/justchat
+            git fetch
+            git pull
+            docker compose down
+            docker compose up -d
