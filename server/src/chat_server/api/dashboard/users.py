@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, Query, status
+from fastapi import Depends, HTTPException, status
 from fastapi.routing import APIRouter
 
 from chat_server.api.deps import get_current_user
@@ -17,7 +17,7 @@ async def list_users(session: DBSession, offset: int = 0, limit: int = 10):
 
     count, users = await crud.get_users_paginated(session, offset, limit)
 
-    return UsersPublic(count=count, users=users)
+    return UsersPublic(count=count, users=users)  # type: ignore
 
 
 @router.get(
@@ -53,4 +53,4 @@ async def get_user_messages(
 
     count, messages = await crud.get_user_messages(session, user_id, offset, limit)
 
-    return MessagesPublic(count=count, messages=messages)
+    return MessagesPublic(count=count, messages=messages)  # type: ignore

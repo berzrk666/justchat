@@ -105,7 +105,7 @@ async def get_users_paginated(
     users_stmt = select(UserTable).limit(limit).offset(offset)
     users = await session.scalars(users_stmt)
 
-    return count.scalar(), users.all()
+    return count.scalar(), users.all()  # type: ignore
 
 
 async def get_user_messages(
@@ -127,7 +127,7 @@ async def get_user_messages(
     )
     messages = await session.scalars(messages_stmt)
 
-    return count.scalar(), messages.all()
+    return count.scalar(), messages.all()  # type: ignore
 
 
 async def create_message(
@@ -136,11 +136,11 @@ async def create_message(
     """
     Store a message in the database.
     """
-    user_db = await get_user_by_username(session, message.payload.sender.username)
+    user_db = await get_user_by_username(session, message.payload.sender.username)  # type: ignore
     if not user_db:
         return None
     sender_id = user_db.id
-    sender_username = message.payload.sender.username
+    sender_username = message.payload.sender.username  # type: ignore
     channel_id = message.payload.channel_id
     timestamp = message.timestamp
 
