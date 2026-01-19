@@ -1,9 +1,11 @@
 from datetime import timedelta
+from typing import Annotated
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 
-from chat_server.api.models import Token, UserCreate, UserLogin, UserPublic
+from chat_server.api.models import Token, UserCreate, UserPublic
 from chat_server.db import crud
 from chat_server.deps import DBSession
 from chat_server.security.utils import generate_access_token, verify_password_hash
@@ -25,7 +27,9 @@ async def signup(session: DBSession, user_in: UserCreate) -> UserPublic:
 
 
 @router.post("/login")
-async def login(session: DBSession, credentials: UserLogin) -> Token:
+async def login(
+    session: DBSession, credentials: Annotated[OAuth2PasswordRequestForm, Depends()]
+) -> Token:
     """
     Authenticate User and return a JWT Token
     """
