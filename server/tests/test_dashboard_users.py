@@ -106,3 +106,194 @@ class TestGetUser:
         response = await test_client.get(f"{API_URL}/users/99999", headers=auth_headers)
 
         assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_get_user_unauthorized(self, test_client: AsyncClient):
+        """
+        401 is expected when no authorization is provided
+        """
+        response = await test_client.get(
+            f"{API_URL}/users/666",
+        )
+
+        assert response.status_code == 401
+
+
+class TestUpdateUser:
+    """
+    Tests for PATCH /dashboard/users/{user_id}
+    """
+
+    @pytest.mark.asyncio
+    async def test_update_username_success(
+        self, test_client: AsyncClient, test_session, auth_headers
+    ):
+        """
+        Can change the username
+        """
+
+        user = await crud.create_user(
+            test_session, UserCreate(username="testuser", password="Password1")
+        )
+
+        assert user
+
+        response = await test_client.patch(
+            f"{API_URL}/users/{user.id}",
+            headers=auth_headers,
+            json={"username": "newname"},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["username"] == "newname"
+
+    @pytest.mark.asyncio
+    async def test_update_password_success(
+        self, test_client: AsyncClient, test_session, auth_headers
+    ):
+        """
+        Can change the password and login with the new password
+        """
+
+        user = await crud.create_user(
+            test_session, UserCreate(username="testuser", password="Password1")
+        )
+
+        assert user
+
+        response = await test_client.patch(
+            f"{API_URL}/users/{user.id}",
+            headers=auth_headers,
+            json={"password": "TestPassword123"},
+        )
+
+        assert response.status_code == 200
+
+        # Can login with the new password
+        login_response = await test_client.post(
+            "/api/v1/auth/login",
+            data={
+                "username": "testuser",
+                "password": "TestPassword123",
+            },
+        )
+
+        assert login_response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_update_user_not_found(
+        self, test_client: AsyncClient, test_session, auth_headers
+    ):
+        """
+        Return 404 for non-existent user
+        """
+
+        # Required at least 1 user in the database
+        await crud.create_user(
+            test_session, UserCreate(username="testuser", password="Password1")
+        )
+        response = await test_client.patch(
+            f"{API_URL}/users/666",
+            headers=auth_headers,
+            json={"username": "newname"},
+        )
+
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_update_duplicate_username(
+        self, test_client: AsyncClient, test_session, auth_headers
+    ):
+        """
+        Return 409 when username already exists
+        """
+
+        user1 = await crud.create_user(
+            test_session, UserCreate(username="user1", password="Password1")
+        )
+        user2 = await crud.create_user(
+            test_session, UserCreate(username="user2", password="Password2")
+        )
+
+        assert user1
+        assert user2
+
+        response = await test_client.patch(
+            f"{API_URL}/users/{user2.id}",
+            headers=auth_headers,
+            json={"username": user1.username},
+        )
+
+        assert response.status_code == 409
+
+    @pytest.mark.asyncio
+    async def test_update_empty_body(
+        self, test_client: AsyncClient, test_session, auth_headers
+    ):
+        """
+        User detail should remain unchanged
+        """
+
+        user = await crud.create_user(
+            test_session, UserCreate(username="testuser", password="Password1")
+        )
+
+        assert user
+
+        response = await test_client.patch(
+            f"{API_URL}/users/{user.id}", headers=auth_headers, json={}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["username"] == "testuser"
+
+    @pytest.mark.asyncio
+    async def test_update_user_unauthorized(self, test_client: AsyncClient):
+        """
+        401 is expected when no authorization is provided
+        """
+        response = await test_client.patch(
+            f"{API_URL}/users/666",
+            json={"username": "testuser"},
+        )
+
+        assert response.status_code == 401
+
+
+class TestDeleteUser:
+    """
+    Tests for DELETE /dashboard/users/{user_id}
+    """
+
+    @pytest.mark.asyncio
+    async def test_delete_user_success(
+        self, test_client: AsyncClient, test_session, auth_headers
+    ):
+        """
+        Delete user and return 204.
+        """
+
+        user = await crud.create_user(
+            test_session, UserCreate(username="testuser", password="Password1")
+        )
+
+        assert user
+
+        response = await test_client.delete(
+            f"{API_URL}/users/{user.id}", headers=auth_headers
+        )
+
+        assert response.status_code == 204
+
+    @pytest.mark.asyncio
+    async def test_update_user_unauthorized(self, test_client: AsyncClient):
+        """
+        401 is expected when no authorization is provided
+        """
+        response = await test_client.delete(
+            f"{API_URL}/users/666",
+        )
+
+        assert response.status_code == 401
