@@ -19,6 +19,8 @@
 
 You can access the demo here: [chat.awp1.xyz](https://chat.awp1.xyz)
 
+- Video
+
 ## Deployment
 
 <div align="center">
@@ -64,8 +66,6 @@ flowchart TD
 ## Message Protocol
 
 The chat communication is done entirely in WebSockets.
-
-- Video
 
 ### Creating new protocols
 
@@ -123,7 +123,7 @@ be based of `BaseModel` to ensure validation by Pydantic.
 - Top-Level Object is the `ConnectionManager` that will accept a WebSocket
 connection and then process every data received.
   - Ensure the first message ("hello") by the user is correct.
-- Check if its an authenticated user or creates a guest user.
+  - Check if its an authenticated user or creates a guest user.
   - Validate all the subsequent messages and then send then to a router
   that will handle the message.
   - Handle the disconnect by the user (closed the tab)
