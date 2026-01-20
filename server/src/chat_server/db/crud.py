@@ -12,6 +12,8 @@ from chat_server.db.models import MessageTable, MuteTable, UserTable
 from chat_server.protocol.messages import ChatSend
 from chat_server.security.utils import get_password_hash
 
+# TODO: User the new exceptions: UserNotFound and UsernameAlreadyExists
+
 
 async def create_user(session: AsyncSession, user_in: UserCreate) -> UserTable | None:
     """

@@ -345,3 +345,5 @@ class TestGetUserMessages:
         data = response.json()
         assert data["count"] == 0
         assert data["messages"] == []
+
+    # TODO: Test for successful retrieval of messages sent
