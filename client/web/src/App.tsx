@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type FormEvent, type KeyboardEvent } from 'react'
+import { Link } from 'react-router-dom'
 import './App.css'
 import { initializeMessageHandlers } from './config/messageRegistry'
 import { MessageRenderer } from './components/messages/MessageRenderer'
@@ -594,12 +595,20 @@ function App() {
                 )}
               </span>
               {isAuthenticated ? (
-                <button
-                  onClick={handleLogout}
-                  className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-                >
-                  Logout
-                </button>
+                <>
+                  <Link
+                    to="/dashboard"
+                    className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </>
               ) : (
                 <button
                   onClick={() => setIsLoginModalOpen(true)}

@@ -7,6 +7,8 @@ import { UserProvider, useUser } from './contexts/UserContext'
 import { WebSocketProvider } from './contexts/WebSocketContext'
 import { ReactionsProvider } from './contexts/ReactionsContext'
 import { NotFound } from './components/NotFound'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import { Dashboard } from './pages/Dashboard'
 
 function AppWithWebSocket() {
   const { username, setUsername } = useUser()
@@ -29,6 +31,11 @@ createRoot(document.getElementById('root')!).render(
       <UserProvider>
         <Routes>
           <Route path="/" element={<AppWithWebSocket />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </UserProvider>
