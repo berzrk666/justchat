@@ -19,6 +19,48 @@
 
 You can access the demo here: [chat.awp1.xyz](https://chat.awp1.xyz)
 
+## Deployment
+
+<div align="center">
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'stepAfter'}}}%%
+flowchart TD
+    %% Nodes
+    A[Custom Domain<br/>chat.awp1.xyz]
+    B[CloudFront + ACM<br/>CDN + SSL]
+    
+    subgraph AWS ["AWS Infrastructure"]
+        direction TB
+        D[S3<br/>Static Frontend]
+        E[EC2<br/>Backend]
+        F[(RDS<br/>PostgreSQL)]
+    end
+
+    %% Connections
+    A --> B
+    B -->|Frontend| D
+    B -->|"Backend (/api/*, /ws)"| E
+    E -->|Database| F
+
+    %% Styling
+    style A fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style B fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style D fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style E fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style F fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style AWS fill:#f5f5f5,stroke:#9e9e9e,stroke-dasharray: 5 5
+```
+
+</div>
+
+### Security
+
+- S3 bucket is private -- accessible only via CloudFront Origin Access Control
+- EC2 security group allows inbound traffic only from CloudFront
+- All traffic encrypted via HTTPS/WSS (ACM certificates)
+- Database in private subnet, accessible only from EC2
+
 ## Message Protocol
 
 The chat communication is done entirely in WebSockets.
@@ -142,48 +184,6 @@ cd client/web
 npm run install # Install dependencies
 npm run dev     # Run
 ```
-
-## Deployment
-
-<div align="center">
-
-```mermaid
-%%{init: {'flowchart': {'curve': 'stepAfter'}}}%%
-flowchart TD
-    %% Nodes
-    A[Custom Domain<br/>chat.awp1.xyz]
-    B[CloudFront + ACM<br/>CDN + SSL]
-    
-    subgraph AWS ["AWS Infrastructure"]
-        direction TB
-        D[S3<br/>Static Frontend]
-        E[EC2<br/>Backend]
-        F[(RDS<br/>PostgreSQL)]
-    end
-
-    %% Connections
-    A --> B
-    B -->|Frontend| D
-    B -->|"Backend (/api/*, /ws)"| E
-    E -->|Database| F
-
-    %% Styling
-    style A fill:#f9f9f9,stroke:#333,stroke-width:2px
-    style B fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    style D fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style E fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style F fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    style AWS fill:#f5f5f5,stroke:#9e9e9e,stroke-dasharray: 5 5
-```
-
-</div>
-
-### Security
-
-- S3 bucket is private -- accessible only via CloudFront Origin Access Control
-- EC2 security group allows inbound traffic only from CloudFront
-- All traffic encrypted via HTTPS/WSS (ACM certificates)
-- Database in private subnet, accessible only from EC2
 
 ## Possible Improvements
 
