@@ -1,5 +1,7 @@
 # Simple Live Chat using WebSockets
 
+**justchat** is a real-time chat application built using WebSockets.
+
 ## Features
 
 - Multi channel
@@ -13,30 +15,15 @@
   - Kick user from channel
   - Mute user in channel (with duration and reason)
 
-## TODOs
+## Demo
 
-- [ ] Add **Redis** for *scaling* and improve *performance*
-- [ ] Improve **Reactions**
-  - [ ] Keep track of who reacted
-  - [ ] Persistent reactions
-- [ ] Make **message protocol payload** smaller for *efficiency*
-  - [ ] Use *bit fields* instead of `StrEnum` for the `MessageType`
-  - [ ] Smaller fields, e.g. `user` -> `u`
-- [ ] Add **pagination** for the message history
-- [X] Add typing indicator
-- [X] Add **slash commands**
-  - [X] Kick
-  - [X] Mute / Unmute
-  - [ ] Ban/Unban
-- [ ] Add **more tests**
-
-## Need fixing
-
--
+You can access the demo here: [chat.awp1.xyz](https://chat.awp1.xyz)
 
 ## Message Protocol
 
-The communication is done entirely in WebSockets.
+The chat communication is done entirely in WebSockets.
+
+- Video
 
 ### Creating new protocols
 
@@ -53,13 +40,13 @@ sent/received by both the client and server.
 your **implementation** of the protocol.
 4. And **register** this `handler` to a `MessageType` inside `server/handler/routes.py`
 
-After this the server will send every request of this new `MessageType`
-to the specified `handler`.
+After this, all incoming WebSockets messages of `MessageType` will be routed to
+the new `handler`
 
 #### Dependency Injections
 
 I also have some decorators (`server/handler/decorators.py`) that is commonly
-used in the protocols, i.e., check if the user is currently in the channel,
+used in the protocols, e.g., check if the user is currently in the channel,
 if the user has permission, ...
 
 - `@validate_message(MessageType)`: Validate if the message received from the
@@ -75,13 +62,13 @@ Every message protocol (`protocol/messages.py`) is a child of the `BaseMessage`
 (`protocol/basemessage`), which represents the protocol in its base form.
 
 Every message contains a `payload` that will hold the data needed for certain
-messages, e.g. a `CHAT_SEND` message that will handle every message sent by
+messages, e.g. a `CHAT_SEND` message will handle every message sent by
 a user expects the sender's `username`, the `channel_id` and the `content`
-of the message, while a `CHANNEL_JOIN` just expects the `channel_id` and
+of the message, while a `CHANNEL_JOIN` expects the `channel_id` and
 an User (that is filled by the server).
 
 That means both messages are `BaseMessage`, however their `payload` will be
-their different.
+their difference.
 
 #### Validation of the Message Protocol
 
@@ -89,12 +76,12 @@ Validation is done *automatically* by **Pydantic** since `BaseMessage`
 is created using Pydantic's `BaseModel`. And the `payload` should also
 be based of `BaseModel` to ensure validation by Pydantic.
 
-## Design
+## Architecture Design
 
 - Top-Level Object is the `ConnectionManager` that will accept a WebSocket
 connection and then process every data received.
   - Ensure the first message ("hello") by the user is correct.
-  - Check if its an authenticated user or creates a guest user.
+- Check if its an authenticated user or creates a guest user.
   - Validate all the subsequent messages and then send then to a router
   that will handle the message.
   - Handle the disconnect by the user (closed the tab)
@@ -113,3 +100,100 @@ certain features.
   user, a channel, or, if needed, a WebSocket.
   - `ModerationService` manages the chat commands related to moderation
   (`mute`, `ban`)
+
+## Local Development
+
+Clone the project
+
+```bash
+git clone https://github.com/berzrk666/justchat.git
+```
+
+Go to the project directory
+
+```bash
+cd justchat/
+```
+
+Copy `docker-compose.dev.yml` to `docker-compose.yml`
+
+```bash
+cp docker-compose.dev.yml docker-compose.yml
+```
+
+Edit `docker-compose.yml` and set the environment variables to your needs
+or use default
+
+Build and run the container
+
+```bash
+docker compose build
+docker compose up -d
+
+# Or use the Makefile aliases
+make dev
+make run
+```
+
+To run the test environment for the frontend:
+
+```bash
+cd client/web
+npm run install # Install dependencies
+npm run dev     # Run
+```
+
+## Deployment
+
+<div align="center">
+
+```mermaid
+%%{init: {'flowchart': {'curve': 'stepAfter'}}}%%
+flowchart TD
+    %% Nodes
+    A[Custom Domain<br/>chat.awp1.xyz]
+    B[CloudFront + ACM<br/>CDN + SSL]
+    
+    subgraph AWS ["AWS Infrastructure"]
+        direction TB
+        D[S3<br/>Static Frontend]
+        E[EC2<br/>Backend]
+        F[(RDS<br/>PostgreSQL)]
+    end
+
+    %% Connections
+    A --> B
+    B -->|Frontend| D
+    B -->|"Backend (/api/*, /ws)"| E
+    E -->|Database| F
+
+    %% Styling
+    style A fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style B fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style D fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style E fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style F fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style AWS fill:#f5f5f5,stroke:#9e9e9e,stroke-dasharray: 5 5
+```
+
+</div>
+
+### Security
+
+- S3 bucket is private -- accessible only via CloudFront Origin Access Control
+- EC2 security group allows inbound traffic only from CloudFront
+- All traffic encrypted via HTTPS/WSS (ACM certificates)
+- Database in private subnet, accessible only from EC2
+
+## Possible Improvements
+
+- [ ] Add **Redis** for *scaling* and improve *performance*
+- [ ] Improve **Reactions**
+  - [ ] Keep track of who reacted
+  - [ ] Persistent reactions
+- [ ] Make **message protocol payload** smaller for *efficiency*
+  - [ ] Use *bit fields* instead of `StrEnum` for the `MessageType`
+  - [ ] Smaller fields, e.g. `user` -> `u`
+- [ ] Add **pagination** for the message history
+- [ ] Ban/Unban Command
+- [ ] Add **more tests**
