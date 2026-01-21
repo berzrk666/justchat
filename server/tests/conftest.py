@@ -14,6 +14,7 @@ from chat_server.main import app
 from chat_server.protocol.messages import ChatSend, ChatSendPayload, UserFrom
 from chat_server.security.utils import generate_access_token
 from chat_server.services.channel_service import ChannelService
+from chat_server.services.dashboard_service import DashboardService
 from chat_server.services.message_broker import MessageBroker
 from chat_server.services.moderation_service import ModerationService
 from httpx import ASGITransport, AsyncClient
@@ -178,3 +179,15 @@ def auth_headers(test_user):
     """
     token = generate_access_token(test_user.id, timedelta(minutes=15))
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def mock_dashboard_service():
+    """
+    Mock DashboardService for channel endpoint tests.
+    """
+    mock_service = MagicMock(spec=DashboardService)
+    original = app.state.dashboard_service
+    app.state.dashboard_service = mock_service
+    yield mock_service
+    app.state.dashboard_service = original
