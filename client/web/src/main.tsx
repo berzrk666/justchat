@@ -9,6 +9,7 @@ import { ReactionsProvider } from './contexts/ReactionsContext'
 import { NotFound } from './components/NotFound'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { Dashboard } from './pages/Dashboard'
+import { DashboardChannels } from './pages/DashboardChannels'
 
 function AppWithWebSocket() {
   const { username, setUsername } = useUser()
@@ -34,6 +35,11 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/dashboard/channels" element={
+            <ProtectedRoute>
+              <DashboardChannels />
             </ProtectedRoute>
           } />
           <Route path="*" element={<NotFound />} />

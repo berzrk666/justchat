@@ -1,5 +1,5 @@
 import { tokenStorage } from './tokenStorage'
-import type { UserPublic, UsersPublic, MessagesPublic, UserUpdate } from '../types/dashboard'
+import type { UserPublic, UsersPublic, MessagesPublic, UserUpdate, ChannelsStats, ChannelMembers } from '../types/dashboard'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -107,5 +107,27 @@ export const dashboardService = {
         error.detail
       )
     }
+  },
+
+  async getActiveChannels(): Promise<ChannelsStats> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/dashboard/channels/active`,
+      {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      }
+    )
+    return handleResponse<ChannelsStats>(response)
+  },
+
+  async getChannelMembers(channelId: number): Promise<ChannelMembers> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/dashboard/channels/members/${channelId}`,
+      {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      }
+    )
+    return handleResponse<ChannelMembers>(response)
   },
 }

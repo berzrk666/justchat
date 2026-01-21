@@ -56,6 +56,14 @@ function DashboardIcon({ className = "w-6 h-6" }: { className?: string }) {
   )
 }
 
+function ChannelIcon({ className = "w-6 h-6" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+    </svg>
+  )
+}
+
 function PencilIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,6 +100,14 @@ function SearchIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+  )
+}
+
+function RefreshIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
     </svg>
   )
 }
@@ -321,6 +337,15 @@ export function Dashboard() {
                 Users
               </Link>
             </li>
+            <li>
+              <Link
+                to="/dashboard/channels"
+                className="flex items-center gap-3 px-4 py-3 text-slate-300 hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                <ChannelIcon className="w-5 h-5" />
+                Channels
+              </Link>
+            </li>
           </ul>
         </nav>
 
@@ -401,6 +426,14 @@ export function Dashboard() {
             <div className="px-6 py-5 border-b border-slate-700 flex justify-between items-center">
               <div className="flex items-center gap-4">
                 <h3 className="text-lg font-semibold text-white">All Users</h3>
+                <button
+                  onClick={() => loadUsers()}
+                  disabled={isLoading}
+                  className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Refresh"
+                >
+                  <RefreshIcon className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+                </button>
                 <div className="relative">
                   <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input
