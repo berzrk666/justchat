@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # Server Configuration
     HOST: str = "0.0.0.0"
     PORT: int = 8000
-    ENVIRONMENT: str = "development"
+    ENVIRONMENT: str
 
     # Security
     SECRET_KEY: str = "your-secret-key-change-this-in-production"
