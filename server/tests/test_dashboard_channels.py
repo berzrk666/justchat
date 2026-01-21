@@ -67,14 +67,10 @@ class TestActiveChannels:
     async def test_active_channel_unauthorized(
         self,
         test_client: AsyncClient,
-        mock_dashboard_service,
     ):
         """
         401 is expected when no authorization is provided
         """
-        # Mock Return Values
-        mock_dashboard_service.get_active_channels.return_value = []
-
         response = await test_client.get(f"{API_URL}/active")
 
         assert response.status_code == 401
