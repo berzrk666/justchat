@@ -14,6 +14,11 @@
 - Chat Commands (/command)
   - Kick user from channel
   - Mute user in channel (with duration and reason)
+- API endpoints for a dashboard
+  - Manage users.
+  - Check users messages.
+  - Check active channels.
+  - Check all members of a channel.
 
 ## Demo
 
@@ -44,14 +49,6 @@ flowchart TD
     B -->|Frontend| D
     B -->|"Backend (/api/*, /ws)"| E
     E -->|Database| F
-
-    %% Styling
-    style A fill:#f9f9f9,stroke:#333,stroke-width:2px
-    style B fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    style D fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style E fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style F fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    style AWS fill:#f5f5f5,stroke:#9e9e9e,stroke-dasharray: 5 5
 ```
 
 </div>
@@ -186,6 +183,7 @@ Build and run the container
 ```bash
 docker compose build
 docker compose up -d
+# or `docker-compose` if using older docker compose
 
 # Or use the Makefile aliases
 make dev
@@ -196,7 +194,7 @@ To run the test environment for the frontend:
 
 ```bash
 cd client/web
-npm run install # Install dependencies
+npm install     # Install dependencies
 npm run dev     # Run
 ```
 
