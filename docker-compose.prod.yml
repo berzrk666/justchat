@@ -9,6 +9,9 @@ services:
       SUPERUSER_USERNAME: "admin"
       SUPERUSER_PASSWORD: "admin"
 
+      # Set allowed CORS origins
+      ORIGINS = "changethis"
+
       POSTGRES_USER: "changethis"
       POSTGRES_PASSWORD: "changethis"
       POSTGRES_HOST: "changethis"
