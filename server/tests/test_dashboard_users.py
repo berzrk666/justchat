@@ -27,7 +27,7 @@ class TestListUsers:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["count"] == 2
+        assert data["total_users"] == 2
         assert data["users"][0]["username"] == "user1"
         assert data["users"][1]["username"] == "user2"
 
@@ -44,12 +44,12 @@ class TestListUsers:
             )
 
         response = await test_client.get(
-            f"{API_URL}/users/?offset=2&limit=2", headers=auth_headers
+            f"{API_URL}/users/?page=2&page_size=2", headers=auth_headers
         )
 
         assert response.status_code == 200
         data = response.json()
-        assert data["count"] == 6
+        assert data["total_users"] == 6
         assert len(data["users"]) == 2
         assert data["users"][0]["username"] == "user2"
 
