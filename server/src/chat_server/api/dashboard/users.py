@@ -13,12 +13,16 @@ router = APIRouter(prefix="/users", tags=["dashboard-users"])
 
 
 @router.get("/", response_model=UsersPublic, dependencies=[Depends(get_current_user)])
-async def list_users(session: DBSession, offset: int = 0, limit: int = 10):
+async def list_users(
+    session: DBSession, offset: int = 0, limit: int = 10, registered_only: bool = False
+):
     """
     Get a list of users
     """
 
-    count, users = await crud.get_users_paginated(session, offset, limit)
+    count, users = await crud.get_users_paginated(
+        session, offset, limit, registered_only
+    )
 
     return UsersPublic(count=count, users=users)  # type: ignore
 

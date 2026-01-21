@@ -36,9 +36,16 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export const dashboardService = {
-  async getUsers(offset: number = 0, limit: number = 10): Promise<UsersPublic> {
+  async getUsers(offset: number = 0, limit: number = 10, registeredOnly: boolean = false): Promise<UsersPublic> {
+    const params = new URLSearchParams({
+      offset: offset.toString(),
+      limit: limit.toString(),
+    })
+    if (registeredOnly) {
+      params.append('registered_only', 'true')
+    }
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/dashboard/users/?offset=${offset}&limit=${limit}`,
+      `${API_BASE_URL}/api/v1/dashboard/users/?${params.toString()}`,
       {
         method: 'GET',
         headers: getAuthHeaders(),

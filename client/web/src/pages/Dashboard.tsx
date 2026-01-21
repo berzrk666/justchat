@@ -108,6 +108,7 @@ export function Dashboard() {
   const [currentPage, setCurrentPage] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [registeredOnly, setRegisteredOnly] = useState(false)
 
   // Stats
   const [registeredCount, setRegisteredCount] = useState(0)
@@ -135,7 +136,7 @@ export function Dashboard() {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await dashboardService.getUsers(currentPage * USERS_PER_PAGE, USERS_PER_PAGE)
+      const response = await dashboardService.getUsers(currentPage * USERS_PER_PAGE, USERS_PER_PAGE, registeredOnly)
       setUsers(response.users)
       setTotalUsers(response.count)
 
@@ -153,7 +154,7 @@ export function Dashboard() {
     } finally {
       setIsLoading(false)
     }
-  }, [currentPage])
+  }, [currentPage, registeredOnly])
 
   useEffect(() => {
     loadUsers()
@@ -378,7 +379,27 @@ export function Dashboard() {
           <div className="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-700 flex justify-between items-center">
               <h3 className="text-lg font-semibold text-white">All Users</h3>
-              <span className="text-sm text-slate-400">{totalUsers} total</span>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-sm text-slate-400">Registered only</span>
+                  <button
+                    onClick={() => {
+                      setCurrentPage(0)
+                      setRegisteredOnly(!registeredOnly)
+                    }}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${
+                      registeredOnly ? 'bg-blue-600' : 'bg-slate-600'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                        registeredOnly ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </label>
+                <span className="text-sm text-slate-400">{totalUsers} total</span>
+              </div>
             </div>
 
             {/* Loading State */}

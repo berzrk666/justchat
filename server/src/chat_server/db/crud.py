@@ -4,6 +4,7 @@ from datetime import timedelta
 from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import query
 from sqlalchemy.sql import delete, select
 
 from chat_server.api.models import UserCreate, UserUpdate
@@ -96,7 +97,10 @@ async def get_user_by_id(session: AsyncSession, id: int) -> UserTable | None:
 
 
 async def get_users_paginated(
-    session: AsyncSession, offset: int = 0, limit: int = 10
+    session: AsyncSession,
+    offset: int = 0,
+    limit: int = 10,
+    registered_only: bool = False,
 ) -> tuple[int, list[UserTable]]:
     """
     Retrive a paginated list of users
@@ -106,6 +110,8 @@ async def get_users_paginated(
     count = await session.execute(count_stmt)
 
     users_stmt = select(UserTable).limit(limit).offset(offset)
+    if registered_only:
+        users_stmt = users_stmt.where(UserTable.is_guest.is_(False))
     users = await session.scalars(users_stmt)
 
     return count.scalar(), users.all()  # type: ignore
