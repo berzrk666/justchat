@@ -7,8 +7,6 @@ export interface UserPublic {
 
 export interface UsersPublic {
   total_users: number
-  page: number
-  page_size: number
   total_pages: number
   users: UserPublic[]
 }

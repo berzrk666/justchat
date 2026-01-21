@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { dashboardService, DashboardError } from '../services/dashboardService'
 import type { UserPublic, MessagePublic, UserUpdate } from '../types/dashboard'
 
-const USERS_PER_PAGE = 10
+const PAGE_SIZE_OPTIONS = [10, 25, 50]
 const MESSAGES_PER_PAGE = 5
 
 // Icon components
@@ -106,6 +106,7 @@ export function Dashboard() {
   const [users, setUsers] = useState<UserPublic[]>([])
   const [totalUsers, setTotalUsers] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   const [totalPages, setTotalPages] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -137,7 +138,7 @@ export function Dashboard() {
     setIsLoading(true)
     setError(null)
     try {
-      const response = await dashboardService.getUsers(currentPage, USERS_PER_PAGE, registeredOnly)
+      const response = await dashboardService.getUsers(currentPage, pageSize, registeredOnly)
       setUsers(response.users)
       setTotalUsers(response.total_users)
       setTotalPages(response.total_pages)
@@ -156,7 +157,7 @@ export function Dashboard() {
     } finally {
       setIsLoading(false)
     }
-  }, [currentPage, registeredOnly])
+  }, [currentPage, pageSize, registeredOnly])
 
   useEffect(() => {
     loadUsers()
@@ -399,6 +400,21 @@ export function Dashboard() {
                     />
                   </button>
                 </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-slate-400">Show</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setCurrentPage(1)
+                      setPageSize(Number(e.target.value))
+                    }}
+                    className="bg-slate-700 text-slate-300 text-sm rounded-lg px-3 py-1.5 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {PAGE_SIZE_OPTIONS.map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                  </select>
+                </div>
                 <span className="text-sm text-slate-400">{totalUsers} total</span>
               </div>
             </div>
