@@ -62,6 +62,29 @@ class TestListUsers:
 
         assert response.status_code == 401
 
+    @pytest.mark.asyncio
+    async def test_list_users_username_search(
+        self, test_client: AsyncClient, test_session, auth_headers
+    ):
+        """
+        Test if the search by username query works
+        """
+        await crud.create_user(
+            test_session, UserCreate(username="user1", password="Password1")
+        )
+        await crud.create_user(
+            test_session, UserCreate(username="test", password="Password2")
+        )
+
+        response = await test_client.get(
+            f"{API_URL}/users/?search=user", headers=auth_headers
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["users"]) == 1
+        assert data["users"][0]["username"] == "user1"
+
 
 class TestGetUser:
     """
